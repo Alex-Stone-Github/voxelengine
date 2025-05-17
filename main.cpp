@@ -3,37 +3,61 @@
 #include <string>
 #include <fstream>
 #include <SDL2/SDL.h>
-#include <GL/gl.h>
+#include <GL/glew.h>
 
-std::string read_file(std::string const& path) {
-    static char buffer[512] = {0};
-    std::string file_content;
-    FILE* file = fopen(path.c_str(), "r");
-    assert(file);
-    size_t read_count = 0;
-    do {
-        memset(buffer, 0, sizeof(buffer));
-        read_count = fread(buffer, 1, sizeof(buffer), file);
-        std::string section(buffer, read_count);
-        file_content += section;
-    } while (read_count > 0);
-    fclose(file);
-    return file_content;
-}
+#include "shader.hpp"
 
 static constexpr int width = 900;
 static constexpr int height = 600;
 
 int main() {
+    assert(SDL_Init(SDL_INIT_EVERYTHING) == 0);
     SDL_Window* window = SDL_CreateWindow("Opengl Application",
         SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, width, height,
         SDL_WINDOW_OPENGL);
     assert(window);
     SDL_GLContext glcontext = SDL_GL_CreateContext(window);
+    assert(glcontext);
+    // 330 core
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3);
 
-    // Testing
-    auto cont = read_file("vert.glsl");
-    std::println("{}", cont);
+    // do some glew magic to load extension
+    assert(glewInit() == GLEW_OK);
+
+    // Shaders -------------------
+    auto vert = create_shader("./vert.glsl", GL_VERTEX_SHADER);
+    auto frag = create_shader("./frag.glsl", GL_FRAGMENT_SHADER);
+    uint tmp[] = {vert, frag};
+    auto program = create_program(tmp);
+
+    // Buffers -------------------
+    constexpr float s = 0.5;
+    float xbuffer[] = {s, -s, s};
+    float ybuffer[] = {s, -s, -s};
+    uint indices[] = {0, 1, 2};
+    // Create Everything
+    uint vao, xvbo, yvbo, ibo;
+    glGenBuffers(1, &xvbo);
+    glBindBuffer(GL_ARRAY_BUFFER, xvbo);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(xbuffer), xbuffer, GL_STATIC_DRAW);
+    glGenBuffers(1, &yvbo);
+    glBindBuffer(GL_ARRAY_BUFFER, yvbo);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(ybuffer), ybuffer, GL_STATIC_DRAW);
+    glGenBuffers(1, &ibo);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
+    glCreateVertexArrays(1, &vao);
+
+    // Properties
+    glBindVertexArray(vao);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo); // Make IBO Current
+    glBindBuffer(GL_ARRAY_BUFFER, xvbo);
+    glVertexAttribPointer(0, 1, GL_FLOAT, GL_FALSE, sizeof(float), 0);
+    glEnableVertexAttribArray(0);
+    glBindBuffer(GL_ARRAY_BUFFER, yvbo);
+    glVertexAttribPointer(1, 1, GL_FLOAT, GL_FALSE, sizeof(float), 0);
+    glEnableVertexAttribArray(1);
 
     bool running = true;
     while (running) {
@@ -46,7 +70,24 @@ int main() {
         glViewport(0, 0, width, height);
         glClearColor(1.0, 0.0, 0.0, 1.0);
         glClear(GL_COLOR_BUFFER_BIT);
+
+        // I think I can draw stuff here
+        glUseProgram(program);
+        glBindVertexArray(vao);
+        glDrawElements(GL_TRIANGLES, 3, GL_UNSIGNED_INT, 0);
+
         SDL_GL_SwapWindow(window);
     }
+
+    // Cleanup
+    glDeleteProgram(program);
+    glDeleteShader(vert);
+    glDeleteShader(frag);
+    glDeleteVertexArrays(1, &vao);
+    glDeleteBuffers(1, &xvbo);
+    glDeleteBuffers(1, &ibo);
+    glDeleteBuffers(1, &yvbo);
+    SDL_DestroyWindow(window);
+    SDL_Quit();
     return 0;
 }
