@@ -1,6 +1,7 @@
 #include <print>
 #include <cassert>
 #include <string>
+#include <algorithm>
 #include <fstream>
 #include <SDL2/SDL.h>
 #include <GL/glew.h>
@@ -12,7 +13,7 @@ static constexpr int height = 600;
 
 int main() {
     assert(SDL_Init(SDL_INIT_EVERYTHING) == 0);
-    SDL_Window* window = SDL_CreateWindow("Opengl Application",
+    SDL_Window* window = SDL_CreateWindow("Triangle",
         SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, width, height,
         SDL_WINDOW_OPENGL);
     assert(window);
@@ -22,7 +23,7 @@ int main() {
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3);
 
-    // do some glew magic to load extension
+    // GLEW Extension Loader
     assert(glewInit() == GLEW_OK);
 
     // Shaders -------------------
@@ -71,10 +72,17 @@ int main() {
         glClearColor(1.0, 0.0, 0.0, 1.0);
         glClear(GL_COLOR_BUFFER_BIT);
 
-        // I think I can draw stuff here
+        // Draw Calls
         glUseProgram(program);
         glBindVertexArray(vao);
         glDrawElements(GL_TRIANGLES, 3, GL_UNSIGNED_INT, 0);
+
+        // Upload Host buffer and transfere to device
+        std::ranges::for_each(xbuffer, [](float& xv){
+            xv += 0.001;
+        });
+        glBindBuffer(GL_ARRAY_BUFFER, xvbo);
+        glBufferData(GL_ARRAY_BUFFER, sizeof(xbuffer), xbuffer, GL_STATIC_DRAW);
 
         SDL_GL_SwapWindow(window);
     }
