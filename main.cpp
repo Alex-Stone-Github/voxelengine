@@ -32,8 +32,8 @@ int main() {
     recompute_mesh(chunk, chunk, chunk, chunk, chunk, chunk, chunk);
 
     // Shaders -------------------
-    auto vert = create_shader("./vert.glsl", GL_VERTEX_SHADER);
-    auto frag = create_shader("./frag.glsl", GL_FRAGMENT_SHADER);
+    auto vert = create_shader("./shader/vert.glsl", GL_VERTEX_SHADER);
+    auto frag = create_shader("./shader/frag.glsl", GL_FRAGMENT_SHADER);
     uint tmp[] = {vert, frag};
     auto program = create_program(tmp);
     glDeleteShader(vert);
