@@ -83,7 +83,7 @@ int main() {
 
         // Perform Updates and logic
         glViewport(0, 0, width, height);
-        glClearColor(1.0, 0.0, 0.0, 1.0);
+        glClearColor(0.8, 0.8, 0.8, 1.0);
         glClear(GL_COLOR_BUFFER_BIT);
 
         // Shader Uniforms
@@ -99,6 +99,10 @@ int main() {
         glm::mat4 transform = view * camera * translate;
         auto location = glGetUniformLocation(program, "transform");
         glUniformMatrix4fv(location, 1, GL_FALSE, &transform[0][0]);
+
+        // Testing
+        glDepthFunc(GL_LESS);
+        //glEnable(GL_DEPTH_TEST); breaks
 
         // Draw Calls
         glUseProgram(program);
