@@ -1,3 +1,12 @@
 # Voxel Engine
 
-This is a simple voxel rending engine using a "chunk" system. It is inspired by game systems like minecraft, but is really an attempt for me to learn OpenGL.
+![Cover Image](./doc/cover.png)
+
+
+This is a simple voxel rendering engine, inspired by games like Minecraft. 
+
+# Running
+## Linux
+- Download the source code, including stb into the vendor folder.
+- Ensure dependencies are installed `glew`, `sdl2`.
+- Run `make run`.
