@@ -21,10 +21,10 @@ constexpr float blocksize = 1.0;
 
 
 struct Chunk {
-    static constexpr size_t sizex = 4;
-    static constexpr size_t sizey = 4;
-    static constexpr size_t sizez = 4;
-    unsigned int vao, vbop, vbot, ibo;
+    static constexpr size_t sizex = 32;
+    static constexpr size_t sizey = 32;
+    static constexpr size_t sizez = 32;
+    unsigned int vao, vbop, vbot;
     Vector3 position;
     int vertex_count;
     std::array<std::array<std::array<Block, sizez>, sizey>, sizex> blocks;

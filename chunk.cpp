@@ -24,21 +24,20 @@ Chunk::Chunk(): vertex_count(0) {
     glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(float)*2, 0);
     glEnableVertexAttribArray(1);
 
-    glGenBuffers(1, &ibo);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo);
-
     for (size_t ix = 0; ix < Chunk::sizex; ix ++) {
         for (size_t iy = 0; iy < Chunk::sizey; iy ++) {
             for (size_t iz = 0; iz < Chunk::sizez; iz ++) {
-                *(get_block(ix, iy, iz).value()) = Stone;
+                Block b = Air;
+                float h = sin(ix*.2) * sin(iz*.3);
+                if (iy < h*5+20) b = Stone;
+                if (ix == 0 && iz == 0) b = Air;
+                *(get_block(ix, iy, iz).value()) = b;
             }
         }
     }
-    *get_block(0, 0, 0).value() = Air;
 }
 Chunk::~Chunk() {
     glDeleteVertexArrays(1, &vao);
-    glDeleteBuffers(1, &ibo);
     glDeleteBuffers(1, &vbop);
     glDeleteBuffers(1, &vbot);
 }
@@ -51,14 +50,14 @@ void draw_chunk(
 
     // TODO: Transform matrix
     auto location = glGetUniformLocation(program, "transform");
-    auto transform = glm::translate(glm::vec3(0, 0, -1));
+    auto transform = glm::translate(glm::vec3(chunk.position.x, chunk.position.y, chunk.position.z));
     glUniformMatrix4fv(location, 1, GL_FALSE, &transform[0][0]);
     set_view_matrices(camera, program);
 
     // Draw Calls
     glUseProgram(program);
     glBindVertexArray(chunk.vao);
-    glDrawElements(GL_QUADS, chunk.vertex_count, GL_UNSIGNED_INT, 0);
+    glDrawArrays(GL_QUADS, 0, chunk.vertex_count);
 }
 std::optional<Block*> Chunk::get_block(size_t ix, size_t iy, size_t iz) {
     if (!(ix < sizex && ix >= 0)) return std::nullopt;
@@ -82,7 +81,7 @@ void recompute_mesh(
         for (size_t iy = 0; iy < Chunk::sizey; iy ++) {
             for (size_t iz = 0; iz < Chunk::sizez; iz ++) {
                 auto block = c.get_block(ix, iy, iz).value(); // know it has a block
-                if (blockinfo[*block].is_air) continue;
+                if (!blockinfo[*block].is_air) continue;
 
                 // Calculate Corners
                 auto ox = static_cast<float>(ix);
@@ -92,83 +91,83 @@ void recompute_mesh(
                 Vector3 usw(lsw.x, lsw.y+blocksize, lsw.z);
                 Vector3 lse(lsw.x+blocksize, lsw.y, lsw.z);
                 Vector3 use(lsw.x+blocksize, lsw.y+blocksize, lsw.z);
-
                 Vector3 lnw(ox*blocksize, oy*blocksize, -oz*blocksize-blocksize);
                 Vector3 unw(lsw.x, lsw.y+blocksize, lsw.z-blocksize);
                 Vector3 lne(lsw.x+blocksize, lsw.y, lsw.z-blocksize);
                 Vector3 une(lsw.x+blocksize, lsw.y+blocksize, lsw.z-blocksize);
 
-                // Push vertices for a quad
-                vertices.emplace_back(use);
-                vertices.emplace_back(usw);
-                vertices.emplace_back(lsw);
-                vertices.emplace_back(lse);
-                vertices_uv.emplace_back(Vector2(1.0, 1.0));
-                vertices_uv.emplace_back(Vector2(0.0, 1.0));
-                vertices_uv.emplace_back(Vector2(0.0, 0.0));
-                vertices_uv.emplace_back(Vector2(1.0, 0.0));
+                auto ptexcords = [&vertices_uv](){
+                    vertices_uv.emplace_back(Vector2(1.0, 1.0));
+                    vertices_uv.emplace_back(Vector2(0.0, 1.0));
+                    vertices_uv.emplace_back(Vector2(0.0, 0.0));
+                    vertices_uv.emplace_back(Vector2(1.0, 0.0));
 
-                // Top Too
-                vertices.emplace_back(une);
-                vertices.emplace_back(unw);
-                vertices.emplace_back(usw);
-                vertices.emplace_back(use);
-                vertices_uv.emplace_back(Vector2(1.0, 1.0));
-                vertices_uv.emplace_back(Vector2(0.0, 1.0));
-                vertices_uv.emplace_back(Vector2(0.0, 0.0));
-                vertices_uv.emplace_back(Vector2(1.0, 0.0));
+                };
+                auto check_spot = [&c](size_t x, size_t y, size_t z) {
+                    std::optional<Block*> block = c.get_block(x, y, z);
+                    return block.has_value() && *block.value() != Air;
+                };
+                // North
+                if (check_spot(ix, iy, iz+1)) {
+                    vertices.emplace_back(une);
+                    vertices.emplace_back(unw);
+                    vertices.emplace_back(lnw);
+                    vertices.emplace_back(lne);
+                    ptexcords();
+                }
+                // West
+                if (check_spot(ix-1, iy, iz)) {
+                    vertices.emplace_back(usw);
+                    vertices.emplace_back(unw);
+                    vertices.emplace_back(lnw);
+                    vertices.emplace_back(lsw);
+                    ptexcords();
+                }
+                // South
+                if (check_spot(ix, iy, iz-1)) {
+                    vertices.emplace_back(use);
+                    vertices.emplace_back(usw);
+                    vertices.emplace_back(lsw);
+                    vertices.emplace_back(lse);
+                    ptexcords();
+                }
+                // East
+                if (check_spot(ix+1, iy, iz)) {
+                    vertices.emplace_back(une);
+                    vertices.emplace_back(use);
+                    vertices.emplace_back(lse);
+                    vertices.emplace_back(lne);
+                    ptexcords();
+                }
+                // Up
+                if (check_spot(ix, iy+1, iz)) {
+                    vertices.emplace_back(une);
+                    vertices.emplace_back(unw);
+                    vertices.emplace_back(usw);
+                    vertices.emplace_back(use);
+                    ptexcords();
+                }
+                // Down
+                if (check_spot(ix, iy-1, iz)) {
+                    vertices.emplace_back(lne);
+                    vertices.emplace_back(lse);
+                    vertices.emplace_back(lsw);
+                    vertices.emplace_back(lnw);
+                    ptexcords();
+                }
             }
-        }
-    }
-    // Compression
-    std::vector<Vector3> cvert;
-    std::vector<Vector2> cvertuv;
-    std::vector<unsigned int> cindex;
-    auto has_vertex = [&cvert](Vector3 v) -> std::optional<size_t> {
-        auto location = std::find(cvert.begin(), cvert.end(), v);
-        if (location == cvert.end()) return std::nullopt;
-        return std::distance(cvert.begin(), location);
-    };
-    for (size_t i = 0; i < vertices.size(); i ++) {
-        auto vertex = vertices[i];
-        auto vertex_uv = vertices_uv[i];
-        auto idx = has_vertex(vertex);
-        if (idx.has_value()) {
-            cindex.emplace_back(idx.value());
-        }
-        if (!idx.has_value()) {
-            cvert.emplace_back(vertex);
-            cvertuv.emplace_back(vertex_uv);
-
-            auto nindex = cvert.size()-1; // Safe because we just pushed
-            cindex.emplace_back(nindex);
         }
     }
     // Upload
     // vbop
     glBindVertexArray(c.vao);
     glBindBuffer(GL_ARRAY_BUFFER, c.vbop);
-    glBufferData(GL_ARRAY_BUFFER, cvert.size()*sizeof(Vector3), cvert.data(),
+    glBufferData(GL_ARRAY_BUFFER, vertices.size()*sizeof(Vector3), vertices.data(),
         GL_STATIC_DRAW);
     // vbot
     glBindBuffer(GL_ARRAY_BUFFER, c.vbot);
-    glBufferData(GL_ARRAY_BUFFER, cvertuv.size()*sizeof(Vector2), cvertuv.data(),
+    glBufferData(GL_ARRAY_BUFFER, vertices_uv.size()*sizeof(Vector2), vertices_uv.data(),
         GL_STATIC_DRAW);
-    // ibo
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, c.ibo);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, cindex.size()*sizeof(unsigned int),
-        cindex.data(), GL_STATIC_DRAW);
 
-    c.vertex_count = cindex.size();
-
-    std::println("{}\n{}\n{}", vertices.size(), cindex.size(), cvert.size());
-    std::ranges::for_each(cindex, [](unsigned int i){
-        std::println("{}", i);
-    });
-    std::ranges::for_each(cvert, [](Vector3 v){
-        std::println("{}, {}, {}", v.x, v.y, v.z);
-    });
-    std::ranges::for_each(cvertuv, [](Vector2 v){
-        std::println("{}, {}", v.x, v.y);
-    });
+    c.vertex_count = vertices.size();
 }
