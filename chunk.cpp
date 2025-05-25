@@ -10,39 +10,52 @@
 #include <glm/glm.hpp>
 #include <glm/gtx/transform.hpp>
 
-Chunk::Chunk(): vertex_count(0) {
+LiveChunk::LiveChunk(BlockData const& block_data):
+    vertex_count(0), dirty(true) {
     glGenVertexArrays(1, &vao);
     glBindVertexArray(vao);
 
     glGenBuffers(1, &vbop);
     glBindBuffer(GL_ARRAY_BUFFER, vbop);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(float)*3, 0);
+    glBufferData(vbop, 0, 0, GL_DYNAMIC_DRAW);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vector3), 0);
     glEnableVertexAttribArray(0);
 
     glGenBuffers(1, &vbot);
     glBindBuffer(GL_ARRAY_BUFFER, vbot);
-    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(float)*2, 0);
+    glBufferData(vbot, 0, 0, GL_DYNAMIC_DRAW);
+    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(Vector2), 0);
     glEnableVertexAttribArray(1);
 
-    for (size_t ix = 0; ix < Chunk::sizex; ix ++) {
-        for (size_t iy = 0; iy < Chunk::sizey; iy ++) {
-            for (size_t iz = 0; iz < Chunk::sizez; iz ++) {
-                Block b = Air;
-                float h = sin(ix*.2) * sin(iz*.3);
-                if (iy < h*5+20) b = Stone;
-                if (ix == 0 && iz == 0) b = Air;
-                *(get_block(ix, iy, iz).value()) = b;
-            }
-        }
-    }
+    blocks = block_data; // copy
 }
-Chunk::~Chunk() {
+LiveChunk::~LiveChunk() {
     glDeleteVertexArrays(1, &vao);
     glDeleteBuffers(1, &vbop);
     glDeleteBuffers(1, &vbot);
 }
+LiveChunk::LiveChunk(LiveChunk&& other): vao(other.vao), vbop(other.vbop),
+    vbot(other.vbot), vertex_count(other.vertex_count),
+    position(other.position), blocks(other.blocks), dirty(other.dirty) {
+    other.vao = 0;
+    other.vbop = 0;
+    other.vbot = 0;
+}
+LiveChunk& LiveChunk::operator=(LiveChunk&& other) {
+    position = other.position;
+    vertex_count = other.vertex_count;
+    vao = other.vao;
+    vbop = other.vbop;
+    vbot = other.vbot;
+    blocks = other.blocks;
+    dirty = other.dirty;
+    other.vao = 0;
+    other.vbop = 0;
+    other.vbot = 0;
+    return *this;
+}
 void draw_chunk(
-    Chunk const& chunk,
+    LiveChunk const& chunk,
     Camera const& camera,
     unsigned int program
 ) {
@@ -59,29 +72,29 @@ void draw_chunk(
     glBindVertexArray(chunk.vao);
     glDrawArrays(GL_QUADS, 0, chunk.vertex_count);
 }
-std::optional<Block*> Chunk::get_block(size_t ix, size_t iy, size_t iz) {
+std::optional<Block*> LiveChunk::get_block(size_t ix, size_t iy, size_t iz) {
     if (!(ix < sizex && ix >= 0)) return std::nullopt;
     if (!(iy < sizey && iy >= 0)) return std::nullopt;
     if (!(iz < sizez && iz >= 0)) return std::nullopt;
     return &blocks[ix][iy][iz];
 }
 void recompute_mesh(
-    Chunk& c,
-    Chunk const& north,
-    Chunk const& west,
-    Chunk const& south,
-    Chunk const& east,
-    Chunk const& up,
-    Chunk const& down
+    LiveChunk& c,
+    std::optional<LiveChunk const*> north,
+    std::optional<LiveChunk const*> west,
+    std::optional<LiveChunk const*> south,
+    std::optional<LiveChunk const*> east,
+    std::optional<LiveChunk const*> up,
+    std::optional<LiveChunk const*> down
 ) {
     std::vector<Vector3> vertices;
     std::vector<Vector2> vertices_uv;
     // Generation
-    for (size_t ix = 0; ix < Chunk::sizex; ix ++) {
-        for (size_t iy = 0; iy < Chunk::sizey; iy ++) {
-            for (size_t iz = 0; iz < Chunk::sizez; iz ++) {
+    for (size_t ix = 0; ix < LiveChunk::sizex; ix ++) {
+        for (size_t iy = 0; iy < LiveChunk::sizey; iy ++) {
+            for (size_t iz = 0; iz < LiveChunk::sizez; iz ++) {
                 auto block = c.get_block(ix, iy, iz).value(); // know it has a block
-                if (!blockinfo[*block].is_air) continue;
+                if (*block != Air) continue;
 
                 // Calculate Corners
                 auto ox = static_cast<float>(ix);
@@ -160,14 +173,14 @@ void recompute_mesh(
     }
     // Upload
     // vbop
+    c.vertex_count = vertices.size();
     glBindVertexArray(c.vao);
     glBindBuffer(GL_ARRAY_BUFFER, c.vbop);
     glBufferData(GL_ARRAY_BUFFER, vertices.size()*sizeof(Vector3), vertices.data(),
-        GL_STATIC_DRAW);
+        GL_DYNAMIC_DRAW);
     // vbot
     glBindBuffer(GL_ARRAY_BUFFER, c.vbot);
     glBufferData(GL_ARRAY_BUFFER, vertices_uv.size()*sizeof(Vector2), vertices_uv.data(),
-        GL_STATIC_DRAW);
+        GL_DYNAMIC_DRAW);
 
-    c.vertex_count = vertices.size();
 }

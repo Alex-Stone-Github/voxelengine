@@ -24,7 +24,7 @@ void set_view_matrices(Camera const& camera, unsigned int program) {
     location = glGetUniformLocation(program, "perspective");
     constexpr float fov = 90.0f;
     auto perspective = glm::perspective(fov/180.0f*3.1415f,
-        static_cast<float>(width/height), 0.1f, 100.0f);
+        static_cast<float>(width/height), 0.1f, 10000.0f);
     glUniformMatrix4fv(location, 1, GL_FALSE, &perspective[0][0]);
 
 }

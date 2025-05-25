@@ -15,6 +15,23 @@
 #include "chunk.hpp"
 #include "display.hpp"
 #include "texture.hpp"
+#include "world.hpp"
+
+LiveChunk::BlockData example() {
+    LiveChunk::BlockData data;
+    for (size_t ix = 0; ix < LiveChunk::sizex; ix ++) {
+        for (size_t iy = 0; iy < LiveChunk::sizey; iy ++) {
+            for (size_t iz = 0; iz < LiveChunk::sizez; iz ++) {
+                Block b = Air;
+                float h = sin(ix*.2) * sin(iz*.3);
+                if (iy < h*5+20) b = Stone;
+                if (ix == 0 && iz == 0) b = Air;
+                data[ix][iy][iz] = b;
+            }
+        }
+    }
+    return data;
+}
 
 int main() {
     assert(SDL_Init(SDL_INIT_EVERYTHING) == 0);
@@ -31,10 +48,18 @@ int main() {
 
     // Game Objects
     Camera camera(Vector3(0, 0, 0), 0, 0);
-    Chunk chunk, c2;
-    recompute_mesh(chunk, chunk, chunk, chunk, chunk, chunk, chunk);
-    recompute_mesh(c2, chunk, chunk, chunk, chunk, chunk, chunk);
-    c2.position.x = blocksize * Chunk::sizex;
+
+    World world;
+    LiveChunk::BlockData b = example();
+    for (int i = 0; i < 3; i ++) {
+        for (int j = 0; j < 3; j ++) {
+            LiveChunk chunky(b);
+            chunky.position.x = i * LiveChunk::sizex * blocksize;
+            chunky.position.z = -(j * LiveChunk::sizez * blocksize);
+            recompute_mesh(chunky, &chunky, &chunky, &chunky, &chunky, &chunky, &chunky);
+            world.chunks.emplace_back(std::move(chunky));
+        }
+    }
 
     // Shaders -------------------
     auto vert = create_shader("./shader/vert.glsl", GL_VERTEX_SHADER);
@@ -96,8 +121,15 @@ int main() {
         glDepthFunc(GL_LESS);
         glEnable(GL_DEPTH_TEST);
 
-        draw_chunk(chunk, camera, program);
-        draw_chunk(c2, camera, program);
+
+        // Clean one dirty chunk
+        auto location = std::ranges::find_if(world.chunks, [](LiveChunk const& c){
+            return c.dirty;
+        });
+
+        std::ranges::for_each(world.chunks, [&](LiveChunk const& chunk) {
+            draw_chunk(chunk, camera, program);
+        });
 
         SDL_GL_SwapWindow(window);
     }
