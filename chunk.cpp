@@ -72,11 +72,11 @@ void draw_chunk(
     glBindVertexArray(chunk.vao);
     glDrawArrays(GL_QUADS, 0, chunk.vertex_count);
 }
-std::optional<Block*> ChunkData::get_block(size_t ix, size_t iy, size_t iz) {
+std::optional<Block> ChunkData::get_block(size_t ix, size_t iy, size_t iz) const {
     if (!(ix < sizex && ix >= 0)) return std::nullopt;
     if (!(iy < sizey && iy >= 0)) return std::nullopt;
     if (!(iz < sizez && iz >= 0)) return std::nullopt;
-    return &blocks[ix][iy][iz];
+    return blocks[ix][iy][iz];
 }
 void recompute_mesh(
     LiveChunk& c,
@@ -90,11 +90,11 @@ void recompute_mesh(
     std::vector<Vector3> vertices;
     std::vector<Vector2> vertices_uv;
     // Generation
-    for (size_t ix = 0; ix < sizex; ix ++) {
-        for (size_t iy = 0; iy < sizey; iy ++) {
-            for (size_t iz = 0; iz < sizez; iz ++) {
+    for (int ix = 0; ix < static_cast<int>(sizex); ix ++) {
+        for (int iy = 0; iy < static_cast<int>(sizey); iy ++) {
+            for (int iz = 0; iz < static_cast<int>(sizez); iz ++) {
                 auto block = c.block_data.get_block(ix, iy, iz).value(); // know it has a block
-                if (*block != Air) continue;
+                if (block != Air) continue;
 
                 // Calculate Corners
                 auto ox = static_cast<float>(ix);
@@ -116,12 +116,33 @@ void recompute_mesh(
                     vertices_uv.emplace_back(Vector2(1.0, 0.0));
 
                 };
-                auto check_spot = [&c](size_t x, size_t y, size_t z) {
-                    std::optional<Block*> block = c.block_data.get_block(x, y, z);
-                    return block.has_value() && *block.value() != Air;
+                auto is_spot_solid = [&](int x, int y, int z) {
+                    std::optional<Block> block = c.block_data.get_block(x, y, z);
+                    if (block.has_value()) return block.value() != Air;
+
+                    // check all the neighbors 
+                    // West - East
+                    if (west.has_value() && x < 0)
+                        block = west.value()->block_data.get_block(x+sizex, y, z);
+                    if (east.has_value() && x >= static_cast<int>(sizex))
+                        block = east.value()->block_data.get_block(x-sizex, y, z);
+                    // South - North
+                    if (south.has_value() && z < 0)
+                        block = south.value()->block_data.get_block(x, y, z+sizez);
+                    if (north.has_value() && z >= static_cast<int>(sizez))
+                        block = north.value()->block_data.get_block(x, y, z-sizez);
+                    // Down - Up
+                    if (down.has_value() && y < 0)
+                        block = down.value()->block_data.get_block(x, y+sizey, z);
+                    if (up.has_value() && y >= static_cast<int>(sizey))
+                        block = up.value()->block_data.get_block(x, y-sizey, z);
+
+                    // Check if we found an alternative - if not we are on the border
+                    if (block.has_value()) return block.value() != Air;
+                    return false;
                 };
                 // North
-                if (check_spot(ix, iy, iz+1)) {
+                if (is_spot_solid(ix, iy, iz+1)) {
                     vertices.emplace_back(une);
                     vertices.emplace_back(unw);
                     vertices.emplace_back(lnw);
@@ -129,7 +150,7 @@ void recompute_mesh(
                     ptexcords();
                 }
                 // West
-                if (check_spot(ix-1, iy, iz)) {
+                if (is_spot_solid(ix-1, iy, iz)) {
                     vertices.emplace_back(usw);
                     vertices.emplace_back(unw);
                     vertices.emplace_back(lnw);
@@ -137,7 +158,7 @@ void recompute_mesh(
                     ptexcords();
                 }
                 // South
-                if (check_spot(ix, iy, iz-1)) {
+                if (is_spot_solid(ix, iy, iz-1)) {
                     vertices.emplace_back(use);
                     vertices.emplace_back(usw);
                     vertices.emplace_back(lsw);
@@ -145,7 +166,7 @@ void recompute_mesh(
                     ptexcords();
                 }
                 // East
-                if (check_spot(ix+1, iy, iz)) {
+                if (is_spot_solid(ix+1, iy, iz)) {
                     vertices.emplace_back(une);
                     vertices.emplace_back(use);
                     vertices.emplace_back(lse);
@@ -153,7 +174,7 @@ void recompute_mesh(
                     ptexcords();
                 }
                 // Up
-                if (check_spot(ix, iy+1, iz)) {
+                if (is_spot_solid(ix, iy+1, iz)) {
                     vertices.emplace_back(une);
                     vertices.emplace_back(unw);
                     vertices.emplace_back(usw);
@@ -161,7 +182,7 @@ void recompute_mesh(
                     ptexcords();
                 }
                 // Down
-                if (check_spot(ix, iy-1, iz)) {
+                if (is_spot_solid(ix, iy-1, iz)) {
                     vertices.emplace_back(lne);
                     vertices.emplace_back(lse);
                     vertices.emplace_back(lsw);

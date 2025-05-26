@@ -25,7 +25,7 @@ struct ChunkData {
     ChunkId id;
     std::array<std::array<std::array<Block, sizez>, sizey>, sizex> blocks;
 
-    std::optional<Block*> get_block(size_t ix, size_t iy, size_t iz);
+    std::optional<Block> get_block(size_t ix, size_t iy, size_t iz) const;
 };
 
 struct LiveChunk {

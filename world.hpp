@@ -1,7 +1,8 @@
 #pragma once
 
 #include <vector>
-#include <set>
+#include <array>
+#include <optional>
 #include <ranges>
 #include <algorithm>
 
@@ -13,4 +14,6 @@ struct World {
 
     void reload_check(ChunkId pos);
     void dirty_check();
+    std::optional<LiveChunk*> find_by_id(ChunkId id);
+    std::array<std::optional<LiveChunk*>, 6> find_neighbors(ChunkId id);
 };
