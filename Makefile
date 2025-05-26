@@ -1,7 +1,7 @@
 CC = g++
 CFLAGS = -std=c++23 -Wall -lSDL2 -lGLEW -lGL
 
-sources = main.cpp shader.cpp camera.cpp chunk.cpp vector3.cpp texture.cpp world.cpp
+sources = main.cpp shader.cpp camera.cpp chunk.cpp vector3.cpp texture.cpp world.cpp gizmo.cpp
 out = main
 
 .PHONY: all clean run
