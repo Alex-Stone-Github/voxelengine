@@ -17,22 +17,6 @@
 #include "texture.hpp"
 #include "world.hpp"
 
-LiveChunk::BlockData example() {
-    LiveChunk::BlockData data;
-    for (size_t ix = 0; ix < LiveChunk::sizex; ix ++) {
-        for (size_t iy = 0; iy < LiveChunk::sizey; iy ++) {
-            for (size_t iz = 0; iz < LiveChunk::sizez; iz ++) {
-                Block b = Air;
-                float h = sin(ix*.2) * sin(iz*.3);
-                if (iy < h*5+20) b = Stone;
-                if (ix == 0 && iz == 0) b = Air;
-                data[ix][iy][iz] = b;
-            }
-        }
-    }
-    return data;
-}
-
 int main() {
     assert(SDL_Init(SDL_INIT_EVERYTHING) == 0);
     SDL_Window* window = SDL_CreateWindow("Triangle",
@@ -48,18 +32,9 @@ int main() {
 
     // Game Objects
     Camera camera(Vector3(0, 0, 0), 0, 0);
+    ChunkId aprxpos(0, 0, 0);
 
     World world;
-    LiveChunk::BlockData b = example();
-    for (int i = 0; i < 3; i ++) {
-        for (int j = 0; j < 3; j ++) {
-            LiveChunk chunky(b);
-            chunky.position.x = i * LiveChunk::sizex * blocksize;
-            chunky.position.z = -(j * LiveChunk::sizez * blocksize);
-            recompute_mesh(chunky, &chunky, &chunky, &chunky, &chunky, &chunky, &chunky);
-            world.chunks.emplace_back(std::move(chunky));
-        }
-    }
 
     // Shaders -------------------
     auto vert = create_shader("./shader/vert.glsl", GL_VERTEX_SHADER);
@@ -121,13 +96,15 @@ int main() {
         glDepthFunc(GL_LESS);
         glEnable(GL_DEPTH_TEST);
 
+        // Testing
+        auto currentx_aprx = static_cast<int>(camera.position.x / (sizex * blocksize));
+        auto currentz_aprx = static_cast<int>(camera.position.z / (sizez * blocksize));
+        aprxpos = ChunkId(currentx_aprx, 0, currentz_aprx);
+        std::println("{}, {}, {}", aprxpos.x, aprxpos.y, aprxpos.z);
 
-        // Clean one dirty chunk
-        auto location = std::ranges::find_if(world.chunks, [](LiveChunk const& c){
-            return c.dirty;
-        });
-
-        std::ranges::for_each(world.chunks, [&](LiveChunk const& chunk) {
+        world.dirty_check();
+        world.reload_check(aprxpos);
+        std::ranges::for_each(world.live_chunks, [&](LiveChunk const& chunk) {
             draw_chunk(chunk, camera, program);
         });
 

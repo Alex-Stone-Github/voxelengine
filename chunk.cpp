@@ -10,8 +10,10 @@
 #include <glm/glm.hpp>
 #include <glm/gtx/transform.hpp>
 
-LiveChunk::LiveChunk(BlockData const& block_data):
+LiveChunk::LiveChunk(ChunkData const& block_data):
     vertex_count(0), dirty(true) {
+    this->block_data = block_data;
+
     glGenVertexArrays(1, &vao);
     glBindVertexArray(vao);
 
@@ -26,8 +28,6 @@ LiveChunk::LiveChunk(BlockData const& block_data):
     glBufferData(vbot, 0, 0, GL_DYNAMIC_DRAW);
     glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(Vector2), 0);
     glEnableVertexAttribArray(1);
-
-    blocks = block_data; // copy
 }
 LiveChunk::~LiveChunk() {
     glDeleteVertexArrays(1, &vao);
@@ -36,7 +36,7 @@ LiveChunk::~LiveChunk() {
 }
 LiveChunk::LiveChunk(LiveChunk&& other): vao(other.vao), vbop(other.vbop),
     vbot(other.vbot), vertex_count(other.vertex_count),
-    position(other.position), blocks(other.blocks), dirty(other.dirty) {
+    position(other.position), dirty(other.dirty), block_data(other.block_data) {
     other.vao = 0;
     other.vbop = 0;
     other.vbot = 0;
@@ -47,7 +47,7 @@ LiveChunk& LiveChunk::operator=(LiveChunk&& other) {
     vao = other.vao;
     vbop = other.vbop;
     vbot = other.vbot;
-    blocks = other.blocks;
+    block_data = other.block_data;
     dirty = other.dirty;
     other.vao = 0;
     other.vbop = 0;
@@ -72,7 +72,7 @@ void draw_chunk(
     glBindVertexArray(chunk.vao);
     glDrawArrays(GL_QUADS, 0, chunk.vertex_count);
 }
-std::optional<Block*> LiveChunk::get_block(size_t ix, size_t iy, size_t iz) {
+std::optional<Block*> ChunkData::get_block(size_t ix, size_t iy, size_t iz) {
     if (!(ix < sizex && ix >= 0)) return std::nullopt;
     if (!(iy < sizey && iy >= 0)) return std::nullopt;
     if (!(iz < sizez && iz >= 0)) return std::nullopt;
@@ -90,10 +90,10 @@ void recompute_mesh(
     std::vector<Vector3> vertices;
     std::vector<Vector2> vertices_uv;
     // Generation
-    for (size_t ix = 0; ix < LiveChunk::sizex; ix ++) {
-        for (size_t iy = 0; iy < LiveChunk::sizey; iy ++) {
-            for (size_t iz = 0; iz < LiveChunk::sizez; iz ++) {
-                auto block = c.get_block(ix, iy, iz).value(); // know it has a block
+    for (size_t ix = 0; ix < sizex; ix ++) {
+        for (size_t iy = 0; iy < sizey; iy ++) {
+            for (size_t iz = 0; iz < sizez; iz ++) {
+                auto block = c.block_data.get_block(ix, iy, iz).value(); // know it has a block
                 if (*block != Air) continue;
 
                 // Calculate Corners
@@ -117,7 +117,7 @@ void recompute_mesh(
 
                 };
                 auto check_spot = [&c](size_t x, size_t y, size_t z) {
-                    std::optional<Block*> block = c.get_block(x, y, z);
+                    std::optional<Block*> block = c.block_data.get_block(x, y, z);
                     return block.has_value() && *block.value() != Air;
                 };
                 // North
@@ -182,5 +182,8 @@ void recompute_mesh(
     glBindBuffer(GL_ARRAY_BUFFER, c.vbot);
     glBufferData(GL_ARRAY_BUFFER, vertices_uv.size()*sizeof(Vector2), vertices_uv.data(),
         GL_DYNAMIC_DRAW);
-
+    c.dirty = false;
+}
+bool ChunkId::operator==(ChunkId const& other) const {
+    return x == other.x && y == other.y && z == other.z;
 }

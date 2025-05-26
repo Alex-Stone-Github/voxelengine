@@ -11,29 +11,37 @@ enum Block: uint8_t {
     Air,
     Stone,
 };
+
+static constexpr size_t sizex = 32;
+static constexpr size_t sizey = 32;
+static constexpr size_t sizez = 32;
 constexpr float blocksize = 1.0;
 
+struct ChunkId {
+    int x, y, z;
+    bool operator==(ChunkId const&) const;
+};
+struct ChunkData {
+    ChunkId id;
+    std::array<std::array<std::array<Block, sizez>, sizey>, sizex> blocks;
+
+    std::optional<Block*> get_block(size_t ix, size_t iy, size_t iz);
+};
 
 struct LiveChunk {
-    static constexpr size_t sizex = 32;
-    static constexpr size_t sizey = 32;
-    static constexpr size_t sizez = 32;
-    using BlockData = std::array<std::array<std::array<Block, sizez>, sizey>, sizex>;
-
     unsigned int vao, vbop, vbot;
     int vertex_count;
     Vector3 position;
-    BlockData blocks;
     bool dirty;
 
-    LiveChunk(BlockData const&);
+    ChunkData block_data;
+
+    LiveChunk(ChunkData const&);
     ~LiveChunk();
     LiveChunk(LiveChunk const&) = delete;
     LiveChunk& operator=(LiveChunk const&) = delete;
     LiveChunk(LiveChunk&&);
     LiveChunk& operator=(LiveChunk&&);
-
-    std::optional<Block*> get_block(size_t ix, size_t iy, size_t iz);
 };
 
 void draw_chunk(
