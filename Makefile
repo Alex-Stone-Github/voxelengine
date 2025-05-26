@@ -10,7 +10,7 @@ all:
 	$(CC) $(sources) -o $(out) $(CFLAGS)
 
 run: all
-	./main
+	./$(out)
 
 clean:
-	rm main
+	rm $(out)
