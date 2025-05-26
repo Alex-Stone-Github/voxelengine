@@ -7,9 +7,29 @@
 #include "vector3.hpp"
 #include "camera.hpp"
 
+enum Cardinal {
+    North,
+    West,
+    South,
+    East,
+    Up,
+    Down,
+};
+
 enum Block: uint8_t {
-    Air,
-    Stone,
+    Air = 0,
+    Stone = 1,
+    Grass = 2,
+};
+struct BlockInfo {
+    static constexpr float ts = 1.0f / 4.0f; // texture size
+    Vector2 side_bl; // texture cordinate bottom left
+    Vector2 up_bl; // texture cordinate bottom left
+};
+constexpr BlockInfo block_lookup[] = {
+    BlockInfo(Vector2(0, 0), Vector2(0, 0)), // Air: Null 
+    BlockInfo(Vector2(BlockInfo::ts*3, BlockInfo::ts*3), Vector2(0, 0)), // Stone
+    BlockInfo(Vector2(BlockInfo::ts, BlockInfo::ts*3), Vector2(0, BlockInfo::ts*3)), // Grass
 };
 
 static constexpr size_t sizex = 32;

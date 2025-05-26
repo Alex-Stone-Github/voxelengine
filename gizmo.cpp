@@ -5,20 +5,20 @@
 #include <glm/glm.hpp>
 #include <glm/gtx/transform.hpp>
 
-Gizmo::Gizmo(Vector3* vertices, Vector2* uvcords, size_t vertex_count, Vector3 position):
+Gizmo::Gizmo(Vector3 const* vertices, Vector2 const* uvcords, size_t vertex_count, Vector3 position):
     vertex_count(vertex_count), position(position) {
     glGenVertexArrays(1, &vao);
     glBindVertexArray(vao);
 
     glGenBuffers(1, &vbop);
     glBindBuffer(GL_ARRAY_BUFFER, vbop);
-    glBufferData(GL_ARRAY_BUFFER, vertex_count, vertices, GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, vertex_count*sizeof(Vector3), vertices, GL_STATIC_DRAW);
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vector3), 0);
     glEnableVertexAttribArray(0);
 
     glGenBuffers(1, &vbot);
     glBindBuffer(GL_ARRAY_BUFFER, vbot);
-    glBufferData(GL_ARRAY_BUFFER, vertex_count, uvcords, GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, vertex_count*sizeof(Vector2), uvcords, GL_STATIC_DRAW);
     glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(Vector2), 0);
     glEnableVertexAttribArray(1);
 }

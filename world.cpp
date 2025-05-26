@@ -9,7 +9,7 @@ ChunkData generate(ChunkId id) {
                 Block b = Air;
                 float h = sin(ix*.2) * sin(iz*.3);
                 if (iy < h*5+20) b = Stone;
-                if (ix == 0 && iz == 0) b = Air;
+                if (ix == 0 && iz == 0) b = Grass;
                 data.blocks[ix][iy][iz] = b;
             }
         }

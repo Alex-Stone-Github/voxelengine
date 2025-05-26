@@ -11,7 +11,7 @@ struct Gizmo {
     int vertex_count;
     Vector3 position;
 
-    Gizmo(Vector3* vertices, Vector2* uvcords, size_t vertex_count, Vector3 position);
+    Gizmo(Vector3 const* vertices, Vector2 const* uvcords, size_t vertex_count, Vector3 position);
     ~Gizmo();
 
     // No move or copy for now

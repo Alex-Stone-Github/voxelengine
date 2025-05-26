@@ -109,16 +109,20 @@ void recompute_mesh(
                 Vector3 lne(lsw.x+blocksize, lsw.y, lsw.z-blocksize);
                 Vector3 une(lsw.x+blocksize, lsw.y+blocksize, lsw.z-blocksize);
 
-                auto ptexcords = [&vertices_uv](){
-                    vertices_uv.emplace_back(Vector2(1.0, 1.0));
-                    vertices_uv.emplace_back(Vector2(0.0, 1.0));
-                    vertices_uv.emplace_back(Vector2(0.0, 0.0));
-                    vertices_uv.emplace_back(Vector2(1.0, 0.0));
+                auto ptexcords = [&vertices_uv](Block block, Cardinal dir){
+                    auto bd = block_lookup[block];
+                    // Bottom Left
+                    auto& bl = bd.side_bl;
+                    if (dir == Up || dir == Down) bl = bd.up_bl;
+                    vertices_uv.emplace_back(Vector2(bl.x+BlockInfo::ts, bl.y+BlockInfo::ts));
+                    vertices_uv.emplace_back(Vector2(bl.x, bl.y+BlockInfo::ts));
+                    vertices_uv.emplace_back(Vector2(bl.x, bl.y));
+                    vertices_uv.emplace_back(Vector2(bl.x+BlockInfo::ts, bl.y));
 
                 };
-                auto is_spot_solid = [&](int x, int y, int z) {
+                auto get_solid_block = [&](int x, int y, int z) -> std::optional<Block> {
                     std::optional<Block> block = c.block_data.get_block(x, y, z);
-                    if (block.has_value()) return block.value() != Air;
+                    if (block.has_value() && block.value() != Air) return block.value();
 
                     // check all the neighbors 
                     // West - East
@@ -138,56 +142,63 @@ void recompute_mesh(
                         block = up.value()->block_data.get_block(x, y-sizey, z);
 
                     // Check if we found an alternative - if not we are on the border
-                    if (block.has_value()) return block.value() != Air;
-                    return false;
+                    if (block.has_value() && block.value() != Air) return block.value();
+                    return std::nullopt;
                 };
+                std::optional<Block> neighbor;
                 // North
-                if (is_spot_solid(ix, iy, iz+1)) {
+                neighbor = get_solid_block(ix, iy, iz+1);
+                if (neighbor.has_value()) {
                     vertices.emplace_back(une);
                     vertices.emplace_back(unw);
                     vertices.emplace_back(lnw);
                     vertices.emplace_back(lne);
-                    ptexcords();
+                    ptexcords(neighbor.value(), North);
                 }
                 // West
-                if (is_spot_solid(ix-1, iy, iz)) {
+                neighbor = get_solid_block(ix-1, iy, iz);
+                if (neighbor.has_value()) {
                     vertices.emplace_back(usw);
                     vertices.emplace_back(unw);
                     vertices.emplace_back(lnw);
                     vertices.emplace_back(lsw);
-                    ptexcords();
+                    ptexcords(neighbor.value(), West);
                 }
                 // South
-                if (is_spot_solid(ix, iy, iz-1)) {
+                neighbor = get_solid_block(ix, iy, iz-1);
+                if (neighbor.has_value()) {
                     vertices.emplace_back(use);
                     vertices.emplace_back(usw);
                     vertices.emplace_back(lsw);
                     vertices.emplace_back(lse);
-                    ptexcords();
+                    ptexcords(neighbor.value(), South);
                 }
                 // East
-                if (is_spot_solid(ix+1, iy, iz)) {
+                neighbor = get_solid_block(ix+1, iy, iz);
+                if (neighbor.has_value()) {
                     vertices.emplace_back(une);
                     vertices.emplace_back(use);
                     vertices.emplace_back(lse);
                     vertices.emplace_back(lne);
-                    ptexcords();
+                    ptexcords(neighbor.value(), East);
                 }
                 // Up
-                if (is_spot_solid(ix, iy+1, iz)) {
+                neighbor = get_solid_block(ix, iy+1, iz);
+                if (neighbor.has_value()) {
                     vertices.emplace_back(une);
                     vertices.emplace_back(unw);
                     vertices.emplace_back(usw);
                     vertices.emplace_back(use);
-                    ptexcords();
+                    ptexcords(neighbor.value(), Up);
                 }
                 // Down
-                if (is_spot_solid(ix, iy-1, iz)) {
+                neighbor = get_solid_block(ix, iy-1, iz);
+                if (neighbor.has_value()) {
                     vertices.emplace_back(lne);
                     vertices.emplace_back(lse);
                     vertices.emplace_back(lsw);
                     vertices.emplace_back(lnw);
-                    ptexcords();
+                    ptexcords(neighbor.value(), Down);
                 }
             }
         }

@@ -16,6 +16,20 @@
 #include "display.hpp"
 #include "texture.hpp"
 #include "world.hpp"
+#include "gizmo.hpp"
+
+static Vector3 const gposition[] = {
+    {1, 1, 0},
+    {-1, 1, 0},
+    {-1, -1, 0},
+    {1, -1, 0},
+};
+static Vector2 const gtexture[] = {
+    {1, 1},
+    {0, 1},
+    {0, 0},
+    {1, 0},
+};
 
 int main() {
     assert(SDL_Init(SDL_INIT_EVERYTHING) == 0);
@@ -31,10 +45,14 @@ int main() {
     SDL_SetRelativeMouseMode(SDL_TRUE);
 
     // Game Objects
-    Camera camera(Vector3(0, 0, 0), 0, 0);
+    Camera camera(Vector3(0, 32.0, 0), 0, 0);
     ChunkId aprxpos(0, 0, 0);
-
     World world;
+
+    Gizmo entity(gposition, gtexture, 4, Vector3(0, 0, 0));
+
+    Image etexture("./picture/image.png", 0);
+    Image atlas("./picture/atlas.png", 1);
 
     // Shaders -------------------
     auto vert = create_shader("./shader/vert.glsl", GL_VERTEX_SHADER);
@@ -44,9 +62,6 @@ int main() {
     glDeleteShader(vert);
     glDeleteShader(frag);
 
-    // textures
-    Image image("./picture/image.png");
-    set_texture(program, image);
 
     bool running = true;
     std::set<int> keys_down;
@@ -102,11 +117,17 @@ int main() {
         aprxpos = ChunkId(currentx_aprx, 0, currentz_aprx);
         std::println("{}, {}, {}", aprxpos.x, aprxpos.y, aprxpos.z);
 
-        world.dirty_check();
+        // Process the chunks - refresh meshes - etc
         world.reload_check(aprxpos);
+        world.dirty_check();
+
+        // Draw the chunks
+        set_texture(program, atlas);
         std::ranges::for_each(world.live_chunks, [&](LiveChunk const& chunk) {
             draw_chunk(chunk, camera, program);
         });
+        set_texture(program, etexture);
+        draw_gizmo(entity, camera, program);
 
         SDL_GL_SwapWindow(window);
     }
