@@ -49,7 +49,7 @@ int main() {
     ChunkId aprxpos(0, 0, 0);
     World world;
 
-    Gizmo entity(gposition, gtexture, 4, Vector3(0, 0, 0));
+    Gizmo entity(gposition, gtexture, 4, Vector3(0, 32, -10));
 
     Image etexture("./picture/image.png", 0);
     Image atlas("./picture/atlas.png", 1);
