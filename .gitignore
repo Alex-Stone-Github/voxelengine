@@ -1,3 +1,4 @@
 main
 .vscode
-
+voxelserver/target
+voxelserver/Cargo.lock
