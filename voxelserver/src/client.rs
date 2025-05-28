@@ -1,4 +1,5 @@
 use std::io::{BufRead, Read};
+use std::process::exit;
 
 use crate::byteutil;
 use crate::clientpacket;
@@ -35,8 +36,9 @@ impl GameClient {
         // Read More bytes
         let mut buffer: [u8; 1024*8] = [0; 1024*8];
         if let Ok(len) = self.connection.read(buffer.as_mut_slice()) {
+            let new_bytes = &buffer[0..len];
             self.incoming_bytes.extend_from_slice(
-                &buffer[0..len]
+                new_bytes
             );
         }
         // Attempt to construct an incoming packet
@@ -46,11 +48,11 @@ impl GameClient {
                 let bytes = &self.incoming_bytes[0..packet_len];
                 packet = clientpacket::IncomingPacket::from_buffer(bytes)
                     .expect("Invalid Packet");
+                dbg!(packet);
                 self.incoming_bytes.drain(0..packet_len);
             }
         }
         // Make updates to local information
-        dbg!(packet);
         // Send appropriate information out
     }
 }

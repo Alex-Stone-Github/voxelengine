@@ -3,7 +3,8 @@
 //! experience for me to get better at c++ and rust programming.
 
 use client::GameClient;
-use std::{char::MAX, ptr::read_unaligned, sync::{Arc, Mutex}}
+use core::{ChunkData, IndexId};
+use std::sync::{Arc, Mutex};
 
 mod listener;
 mod client;
@@ -12,16 +13,17 @@ mod core;
 mod clientpacket;
 mod serverpacket;
 
-const MAX_CLIENTS: usize = 3;
+pub type SharedResource<T> = Arc<Mutex<T>>;
+
 struct Game {
-    clients: [Arc<Mutex<Option<GameClient>>>; MAX_CLIENTS],
+    clients: SharedResource<Vec<SharedResource<GameClient>>>,
+    world: std::collections::HashMap<IndexId, ChunkData>,
 }
 impl Game {
-    pub fn new() -> Self {
-        for i in 0..MAX_CLIENTS {
-            let client = Arc::new(Mutex::new(None));
-        }
-        return Self {
+    fn new() -> Self {
+        Self {
+            clients: Arc::new(Mutex::new(vec![])),
+            world: std::collections::HashMap::new(),
         }
     }
 }
@@ -30,19 +32,18 @@ impl Game {
 fn main() {
     // Game State
     // TODO: Increase performance of queue
-    let game = Game {
-        clients: std::sync::Arc::new(std::sync::Mutex::new(Vec::new()))
-    };
+    let game = Game::new();
 
     // Spin up the incoming thread
-    let clientqueue = std::sync::Arc::clone(&game.clients);
+    let clients = Arc::clone(&game.clients);
     std::thread::spawn(move || {
-        listener::connection_listener(clientqueue);
+        listener::connection_listener(clients);
     });
 
     loop {
-        let clients = game.clients.lock();
-        clients.iter().for_each(|client| {
+        game.clients.lock().unwrap().iter().for_each(|client| {
+            client.lock().unwrap().step();
         });
+        std::thread::sleep(std::time::Duration::from_millis(500));
     }
 }

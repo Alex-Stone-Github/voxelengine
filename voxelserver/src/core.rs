@@ -42,6 +42,5 @@ impl Block {
     }
 }
 pub struct ChunkData {
-    id: IndexId,
     blocks: [[[Block; CSIZE]; CSIZE]; CSIZE],
 }
