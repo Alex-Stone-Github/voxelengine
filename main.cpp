@@ -111,13 +111,10 @@ int main() {
         glDepthFunc(GL_LESS);
         glEnable(GL_DEPTH_TEST);
 
-        // Testing
+        // Process the chunks - refresh meshes - etc
         auto currentx_aprx = static_cast<int>(camera.position.x / (sizex * blocksize));
         auto currentz_aprx = static_cast<int>(camera.position.z / (sizez * blocksize));
         aprxpos = ChunkId(currentx_aprx, 0, currentz_aprx);
-        std::println("{}, {}, {}", aprxpos.x, aprxpos.y, aprxpos.z);
-
-        // Process the chunks - refresh meshes - etc
         world.reload_check(aprxpos);
         world.dirty_check();
 
