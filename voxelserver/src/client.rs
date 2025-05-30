@@ -61,12 +61,14 @@ impl GameClient {
                 if !exists {continue;}
                 let data = &world[&chunkid];
                 self.outgoing.0.push(
-                    //ServerSection::ServerSendFullChunk(chunkid, data.clone())
+                    ServerSection::ServerSendFullChunk(chunkid, data.clone())
+                    /*
                     ServerSection::ServerSendBlockUpdate(CompressedBlockUpdate {
                         chunk: IndexId { x: 1, y: 2, z: 3 },
                         block: IndexId { x: 7, y: 6, z: 5 },
                         new: Block::Grass,
                     })
+                    */
                 );
             }
         }

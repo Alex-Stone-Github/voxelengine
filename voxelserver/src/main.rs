@@ -61,6 +61,5 @@ fn main() {
         game.clients.lock().unwrap().iter().for_each(|client| {
             client.lock().unwrap().step(&mut game.world);
         });
-        std::thread::sleep(std::time::Duration::from_millis(500));
     }
 }

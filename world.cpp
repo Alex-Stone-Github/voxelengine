@@ -1,5 +1,6 @@
 #include "world.hpp"
 
+
 ChunkData generate(IndexId id) {
     ChunkData data;
     data.id = id;

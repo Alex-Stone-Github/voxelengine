@@ -8,6 +8,7 @@
 #include <set>
 #include <SDL2/SDL.h>
 #include <GL/glew.h>
+#include <thread>
 
 #include "shader.hpp"
 #include "camera.hpp"
@@ -62,6 +63,11 @@ int main() {
     Image etexture("./picture/image.png", 0);
     Image atlas("./picture/atlas.png", 1);
 
+    // Network
+    std::println("Network Initialization Successful: {}", net::init());
+    net::ClientGetChunkUpdate(IndexId(69, 70, 80));
+    // Thread Spinning
+    std::thread netthread(net::spinup);
 
     // SDL
     bool running = true;
@@ -102,6 +108,10 @@ int main() {
         }
         if (keys_down.contains(SDL_SCANCODE_SPACE)) camera.position.y += 0.1;
         if (keys_down.contains(SDL_SCANCODE_LSHIFT)) camera.position.y -= 0.1;
+
+        if (keys_down.contains(SDL_SCANCODE_L)) {
+            net::ClientGetChunkFull(IndexId(4, 5, 6));
+        }
 
         // Clear Buffers before next rendering
         glViewport(0, 0, width, height);
