@@ -32,21 +32,10 @@ impl Game {
 
 
 fn main() {
-    let packet = OutgoingPacket(vec![
-        ServerSection::ServerSendBlockUpdate(core::CompressedBlockUpdate {
-             chunk: IndexId { x: 1, y: 2, z: 3 },
-             block: IndexId { x: 4, y: 5, z: 6 },
-             new: Block::Grass,
-            }),
-    ]);
-    //dbg!(&packet);
-    //dbg!(packet.into_buffer());
-
-
     // Game State
     let mut game = Game::new();
     game.world.insert(
-        IndexId{x:4,y:5,z:6}, ChunkData{
+        IndexId{x:1,y:0,z:0}, ChunkData{
             blocks: [[[Block::Grass; CSIZE]; CSIZE]; CSIZE]
         }
     );

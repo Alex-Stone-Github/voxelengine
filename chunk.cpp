@@ -219,3 +219,7 @@ void recompute_mesh(
 bool IndexId::operator==(IndexId const& other) const {
     return x == other.x && y == other.y && z == other.z;
 }
+size_t IndexHash::operator()(IndexId const& idx) const {
+    return std::hash<int>()(idx.x) ^ std::hash<int>()(idx.y << 1) ^ std::hash<int>()(idx.z << 2);
+
+}

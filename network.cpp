@@ -5,6 +5,7 @@
 #include <algorithm>
 #include <ranges>
 #include <print>
+#include <cstring>
 
 // File descriptor for network
 static int connection = 1; // stdout lol
@@ -33,24 +34,60 @@ std::array<uint8_t, 4> to_net_bytes(Width4Type mnum) {
     return {lit_end[3], lit_end[2], lit_end[1], lit_end[0]};
 }
 
-void net::spinup() {
+
+void net::spinup(World* world) {
     static char buffer[1024]; // TODO: EXpand
     std::vector<uint8_t> incoming;
-Repeat:
-    auto length = read(connection, buffer, sizeof(buffer));
-    if (length < 0) goto Repeat; // Error Handling
-    for (int i = 0; i < length; i ++) {
-        incoming.push_back(buffer[i]);
-    }
-    // Print and clear incoming
-    std::ranges::for_each(incoming, [](uint8_t byte) {
-        std::print("{}, ", byte);
-    });
-    std::println("");
-    sleep(2);
-    incoming.clear();
+    auto len_hint = [&incoming]() -> std::optional<size_t> {
+        if (incoming.size() < 4) return std::nullopt;
+        int tmp = *reinterpret_cast<int*>(incoming.data());
+        return ntohl(tmp);
+    };
+    while (true) {
+        // Read More Bytes
+        auto length = read(connection, buffer, sizeof(buffer));
+        if (length < 0) continue; // Error Handling
+        for (int i = 0; i < length; i ++) {
+            incoming.push_back(buffer[i]);
+        }
 
-    goto Repeat;
+        // Interprete packet
+        auto plen = len_hint();
+        auto condition = plen.has_value() && plen.value() <= incoming.size();
+        if (condition) {
+            // Start Work with packet
+            //std::println("Length of data: {}: PLEN: {}", incoming.size(), plen.value());
+            auto i = sizeof(uint32_t); // Packet Length
+            while (i < plen.value()) {
+                // What section
+                auto section_id = ntohl(*reinterpret_cast<uint32_t*>(&incoming.data()[i])); i += 4;
+                //std::println("Uncovered section {}", section_id);
+                if (section_id == 0) {
+                    auto cidx = ntohl(*reinterpret_cast<int32_t*>(&incoming.data()[i])); i += sizeof(uint32_t);
+                    auto cidy = ntohl(*reinterpret_cast<int32_t*>(&incoming.data()[i])); i += sizeof(uint32_t);
+                    auto cidz = ntohl(*reinterpret_cast<int32_t*>(&incoming.data()[i])); i += sizeof(uint32_t);
+
+                    // Skip Chunk Data
+                    auto skip = sizex * sizey * sizez * sizeof(uint8_t);
+                    //std::println("ID{},{},{}   Blocks:{}", cidx, cidy, cidz, skip);
+
+                    ChunkData chunk_data;
+                    memcpy(&chunk_data.blocks, &incoming.data()[i], skip);
+                    auto id = IndexId(cidx, cidy, cidz);
+                    chunk_data.id = id;
+                    std::lock_guard<std::mutex> lock(world->lcguard);
+                    world->lcchunk.insert(std::pair(
+                        id, chunk_data
+                    ));
+                    lock.~lock_guard();
+
+                    i+=skip;
+                }
+            }
+            incoming.erase(incoming.begin(), incoming.begin()+plen.value());
+        }
+
+    }
 }
 
 

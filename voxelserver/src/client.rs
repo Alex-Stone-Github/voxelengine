@@ -11,7 +11,6 @@ use crate::core::*;
 
 pub struct GameClient {
     pub connection: std::net::TcpStream,
-    pub pending_updates: std::sync::Arc<std::sync::Mutex<Vec<ServerSection>>>,
     pub incoming_bytes: Vec<u8>,
     pub outgoing: OutgoingPacket,
 }
@@ -19,7 +18,6 @@ impl GameClient {
     pub fn new(stream: std::net::TcpStream) -> Self {
         return Self {
             connection: stream,
-            pending_updates: std::sync::Arc::new(std::sync::Mutex::new(Vec::new())),
             incoming_bytes: Vec::new(),
             outgoing: OutgoingPacket(Vec::new()),
         }
@@ -49,32 +47,25 @@ impl GameClient {
                 let bytes = &self.incoming_bytes[0..packet_len];
                 packet = clientpacket::IncomingPacket::from_buffer(bytes)
                     .expect("Invalid Packet");
-                dbg!(&packet);
                 self.incoming_bytes.drain(0..packet_len);
             }
         }
-        // Make updates to local information
+        dbg!(&packet);
+        // Make updates to local information and send relevant
         for section in packet.0 {
             if let ClientSection::ClientGetChunkFull(chunkid) = section {
                 // We are requesting the full chunk
                 let exists = world.keys().any(|id| *id == chunkid);
                 if !exists {continue;}
                 let data = &world[&chunkid];
-                self.outgoing.0.push(
-                    ServerSection::ServerSendFullChunk(chunkid, data.clone())
-                    /*
-                    ServerSection::ServerSendBlockUpdate(CompressedBlockUpdate {
-                        chunk: IndexId { x: 1, y: 2, z: 3 },
-                        block: IndexId { x: 7, y: 6, z: 5 },
-                        new: Block::Grass,
-                    })
-                    */
-                );
+                let section = ServerSection::ServerSendFullChunk(chunkid, data.clone());
+                self.outgoing.0.push(section);
             }
         }
         // Send appropriate information out
+        println!("Send Packet with {} sections and {} length", self.outgoing.0.len(), self.outgoing.calulate_net_size());
         let buffer = self.outgoing.into_buffer();
-        dbg!(&self.outgoing);
+        self.outgoing.0.clear();
         self.connection.write_all(buffer.iter().as_slice())
             .expect("Failed to write to client");
     }

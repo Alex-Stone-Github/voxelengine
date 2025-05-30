@@ -78,3 +78,4 @@ void recompute_mesh(
     std::optional<LiveChunk const*> up,
     std::optional<LiveChunk const*> down
 );
+struct IndexHash{size_t operator()(IndexId const&) const;};

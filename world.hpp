@@ -6,14 +6,18 @@
 #include <ranges>
 #include <algorithm>
 #include <unordered_map>
-#include <map>
+#include <mutex>
 
 #include "chunk.hpp"
+
+ChunkData generate(IndexId id); // TODO: Hopefluly remove
+
 
 struct World {
     static constexpr size_t render_dist = 2;
     std::vector<LiveChunk> live_chunks;
-    std::map<IndexId, ChunkData> lcchunks; // local chunks
+    std::mutex lcguard;
+    std::unordered_map<IndexId, ChunkData, IndexHash> lcchunk;
 
 
     void reload_check(IndexId pos);

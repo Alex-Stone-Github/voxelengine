@@ -11,9 +11,12 @@ impl ServerSection {
     pub fn calc_net_size(&self) -> usize {
         match self {
             ServerSection::ServerSendFullChunk(..) => {
-                std::mem::size_of::<IndexId>() + std::mem::size_of::<ChunkData>()
+                std::mem::size_of::<u32>() +
+                std::mem::size_of::<IndexId>() +
+                std::mem::size_of::<ChunkData>()
             }
             ServerSection::ServerSendBlockUpdate(..) => {
+                std::mem::size_of::<u32>() +
                 std::mem::size_of::<IndexId>()*2+4
             }
         }

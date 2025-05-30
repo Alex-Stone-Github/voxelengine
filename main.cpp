@@ -49,8 +49,13 @@ int main() {
     // Game Objects
     Camera camera(Vector3(0, 32.0, 0), 0, 0);
     IndexId aprxpos(0, 0, 0);
-    World world;
     Gizmo entity(gposition, gtexture, 4, Vector3(0, 32, -10));
+
+    World world;
+    world.lcchunk.insert(std::pair(IndexId(0, 0, 0), generate(IndexId(0, 0, 0))));
+    world.lcchunk.insert(std::pair(IndexId(0, 0, -1), generate(IndexId(0, 0, -1))));
+    world.lcchunk.insert(std::pair(IndexId(1, 0, -1), generate(IndexId(1, 0, -1))));
+    world.lcchunk.insert(std::pair(IndexId(2, 0, -2), generate(IndexId(2, 0, -2))));
 
     // Shaders -------------------
     auto vert = create_shader("./shader/vert.glsl", GL_VERTEX_SHADER);
@@ -67,7 +72,7 @@ int main() {
     std::println("Network Initialization Successful: {}", net::init());
     net::ClientGetChunkUpdate(IndexId(69, 70, 80));
     // Thread Spinning
-    std::thread netthread(net::spinup);
+    std::thread netthread(net::spinup, &world);
 
     // SDL
     bool running = true;
@@ -110,7 +115,8 @@ int main() {
         if (keys_down.contains(SDL_SCANCODE_LSHIFT)) camera.position.y -= 0.1;
 
         if (keys_down.contains(SDL_SCANCODE_L)) {
-            net::ClientGetChunkFull(IndexId(4, 5, 6));
+            net::ClientGetChunkFull(IndexId(1, 0, 0));
+            sleep(1);
         }
 
         // Clear Buffers before next rendering

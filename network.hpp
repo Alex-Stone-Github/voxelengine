@@ -6,11 +6,12 @@
 #include <cstdint>
 
 #include "chunk.hpp"
+#include "world.hpp"
 
 namespace net {
 // Initialize the network (true on success)
 bool init(); 
-void spinup();
+void spinup(World*);
 
 // Protocol Names (hence different specific naming case)
 // TODO: New packet for bulk requests

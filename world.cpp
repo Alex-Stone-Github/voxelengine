@@ -28,11 +28,18 @@ void World::reload_check(IndexId pos) {
             });
             if (already_exists) continue;
 
-            // Generate the chunk
-            auto b = generate(nid);
-            LiveChunk chunky(b);
-            chunky.position.x = static_cast<float>(pos.x+cx) * static_cast<float>(sizex) * blocksize;
-            chunky.position.z = static_cast<float>(pos.z+cz) * static_cast<float>(sizez) * blocksize;
+            // Generate a new chunk from local data
+            std::lock_guard<std::mutex> lock(lcguard);
+            auto lc = lcchunk.find(nid);
+            if (lc == lcchunk.end()) continue; // TODO: Do not generate the chunk
+            lock.~lock_guard();
+
+
+            auto& cd = lc->second;
+            LiveChunk chunky(cd);
+            chunky.position.x = static_cast<float>(cd.id.x) * static_cast<float>(sizex) * blocksize;
+            chunky.position.y = static_cast<float>(cd.id.y) * static_cast<float>(sizey) * blocksize;
+            chunky.position.z = static_cast<float>(cd.id.z) * static_cast<float>(sizez) * blocksize;
             live_chunks.emplace_back(std::move(chunky));
 
             // Mark Neighbrs to recompute their own meshes
