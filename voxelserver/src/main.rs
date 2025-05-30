@@ -3,8 +3,10 @@
 //! experience for me to get better at c++ and rust programming.
 
 use client::GameClient;
-use core::{ChunkData, IndexId};
+use serverpacket::{OutgoingPacket, ServerSection};
+use core::{ChunkData, IndexId, CSIZE};
 use std::sync::{Arc, Mutex};
+use crate::core::Block;
 
 mod listener;
 mod client;
@@ -30,9 +32,24 @@ impl Game {
 
 
 fn main() {
+    let packet = OutgoingPacket(vec![
+        ServerSection::ServerSendBlockUpdate(core::CompressedBlockUpdate {
+             chunk: IndexId { x: 1, y: 2, z: 3 },
+             block: IndexId { x: 4, y: 5, z: 6 },
+             new: Block::Grass,
+            }),
+    ]);
+    //dbg!(&packet);
+    //dbg!(packet.into_buffer());
+
+
     // Game State
-    // TODO: Increase performance of queue
-    let game = Game::new();
+    let mut game = Game::new();
+    game.world.insert(
+        IndexId{x:4,y:5,z:6}, ChunkData{
+            blocks: [[[Block::Grass; CSIZE]; CSIZE]; CSIZE]
+        }
+    );
 
     // Spin up the incoming thread
     let clients = Arc::clone(&game.clients);
@@ -42,7 +59,7 @@ fn main() {
 
     loop {
         game.clients.lock().unwrap().iter().for_each(|client| {
-            client.lock().unwrap().step();
+            client.lock().unwrap().step(&mut game.world);
         });
         std::thread::sleep(std::time::Duration::from_millis(500));
     }

@@ -1,4 +1,4 @@
-use crate::{Game, SharedResource};
+use crate::{SharedResource};
 use crate::client::GameClient;
 use std::sync::{Arc, Mutex};
 

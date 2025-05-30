@@ -1,5 +1,5 @@
-use std::io::{BufRead, Read};
-use std::process::exit;
+use std::io::Read;
+use std::io::Write;
 
 use crate::byteutil;
 use crate::clientpacket;
@@ -32,7 +32,8 @@ impl GameClient {
         ];
         Some(byteutil::as_u32(len_bytes.as_slice()) as usize)
     }
-    pub fn step(&mut self) {
+    pub fn step(&mut self, world: &mut std::collections::HashMap<IndexId,
+        ChunkData>) {
         // Read More bytes
         let mut buffer: [u8; 1024*8] = [0; 1024*8];
         if let Ok(len) = self.connection.read(buffer.as_mut_slice()) {
@@ -48,11 +49,31 @@ impl GameClient {
                 let bytes = &self.incoming_bytes[0..packet_len];
                 packet = clientpacket::IncomingPacket::from_buffer(bytes)
                     .expect("Invalid Packet");
-                dbg!(packet);
+                dbg!(&packet);
                 self.incoming_bytes.drain(0..packet_len);
             }
         }
         // Make updates to local information
+        for section in packet.0 {
+            if let ClientSection::ClientGetChunkFull(chunkid) = section {
+                // We are requesting the full chunk
+                let exists = world.keys().any(|id| *id == chunkid);
+                if !exists {continue;}
+                let data = &world[&chunkid];
+                self.outgoing.0.push(
+                    //ServerSection::ServerSendFullChunk(chunkid, data.clone())
+                    ServerSection::ServerSendBlockUpdate(CompressedBlockUpdate {
+                        chunk: IndexId { x: 1, y: 2, z: 3 },
+                        block: IndexId { x: 7, y: 6, z: 5 },
+                        new: Block::Grass,
+                    })
+                );
+            }
+        }
         // Send appropriate information out
+        let buffer = self.outgoing.into_buffer();
+        dbg!(&self.outgoing);
+        self.connection.write_all(buffer.iter().as_slice())
+            .expect("Failed to write to client");
     }
 }
