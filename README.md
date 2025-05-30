@@ -22,5 +22,11 @@ Checkout [doc/assets.md](./doc/assets.md).
 - Ensure dependencies are installed `glew`, `sdl2`.
 - Run `make run`.
 
+## Alternate
+Run the following to startup the server and client together:
+```sh
+sh bootstrap.sh
+```
+
 # Early Build
 ![Early](./doc/cover.png)
