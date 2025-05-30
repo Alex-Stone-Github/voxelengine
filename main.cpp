@@ -17,6 +17,7 @@
 #include "texture.hpp"
 #include "world.hpp"
 #include "gizmo.hpp"
+#include "network.hpp"
 
 static Vector3 const gposition[] = {
     {1, 1, 0},
@@ -46,13 +47,9 @@ int main() {
 
     // Game Objects
     Camera camera(Vector3(0, 32.0, 0), 0, 0);
-    ChunkId aprxpos(0, 0, 0);
+    IndexId aprxpos(0, 0, 0);
     World world;
-
     Gizmo entity(gposition, gtexture, 4, Vector3(0, 32, -10));
-
-    Image etexture("./picture/image.png", 0);
-    Image atlas("./picture/atlas.png", 1);
 
     // Shaders -------------------
     auto vert = create_shader("./shader/vert.glsl", GL_VERTEX_SHADER);
@@ -61,11 +58,14 @@ int main() {
     auto program = create_program(tmp);
     glDeleteShader(vert);
     glDeleteShader(frag);
+    // Textures
+    Image etexture("./picture/image.png", 0);
+    Image atlas("./picture/atlas.png", 1);
 
 
+    // SDL
     bool running = true;
     std::set<int> keys_down;
-
     while (running) {
         // Process Inputs
         SDL_Event event;
@@ -114,7 +114,7 @@ int main() {
         // Process the chunks - refresh meshes - etc
         auto currentx_aprx = static_cast<int>(camera.position.x / (sizex * blocksize));
         auto currentz_aprx = static_cast<int>(camera.position.z / (sizez * blocksize));
-        aprxpos = ChunkId(currentx_aprx, 0, currentz_aprx);
+        aprxpos = IndexId(currentx_aprx, 0, currentz_aprx);
         world.reload_check(aprxpos);
         world.dirty_check();
 

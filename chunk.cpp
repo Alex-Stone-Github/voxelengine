@@ -216,6 +216,6 @@ void recompute_mesh(
         GL_DYNAMIC_DRAW);
     c.dirty = false;
 }
-bool ChunkId::operator==(ChunkId const& other) const {
+bool IndexId::operator==(IndexId const& other) const {
     return x == other.x && y == other.y && z == other.z;
 }

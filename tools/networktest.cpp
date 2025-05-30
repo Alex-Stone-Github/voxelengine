@@ -4,6 +4,7 @@
 #include <netinet/in.h>
 #include <cassert>
 #include <cinttypes>
+#include <cstring>
 
 uint32_t const buffer[] = {
     htonl(4+4*4+4*4), // Size
@@ -42,6 +43,15 @@ int main() {
 
     assert(connect(fd, (sockaddr const*)&localhost8000, sizeof(struct sockaddr_in)) >= 0);
     write(fd, buffer, sizeof(buffer));
-    write(fd, buffer2, sizeof(buffer2));
-    sleep(3);
+
+    while (true) {
+        write(fd, buffer, sizeof(buffer));
+        char buffer[1024];memset(buffer, 0, 1024);
+
+        auto length = read(fd, buffer, sizeof(buffer));
+
+        for (int i = 0; i < length; i ++) {
+            std::cout << (int)buffer[i] << std::endl;
+        }
+    }
 }

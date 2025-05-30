@@ -37,12 +37,12 @@ static constexpr size_t sizey = 32;
 static constexpr size_t sizez = 32;
 constexpr float blocksize = 1.0;
 
-struct ChunkId {
+struct IndexId {
     int x, y, z;
-    bool operator==(ChunkId const&) const;
+    bool operator==(IndexId const&) const;
 };
 struct ChunkData {
-    ChunkId id;
+    IndexId id;
     std::array<std::array<std::array<Block, sizez>, sizey>, sizex> blocks;
 
     std::optional<Block> get_block(size_t ix, size_t iy, size_t iz) const;

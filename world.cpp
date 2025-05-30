@@ -1,6 +1,6 @@
 #include "world.hpp"
 
-ChunkData generate(ChunkId id) {
+ChunkData generate(IndexId id) {
     ChunkData data;
     data.id = id;
     for (size_t ix = 0; ix < sizex; ix ++) {
@@ -17,11 +17,11 @@ ChunkData generate(ChunkId id) {
     return data;
 }
 
-void World::reload_check(ChunkId pos) {
+void World::reload_check(IndexId pos) {
     constexpr int render_dist = 2;
     for (int cx = -render_dist; cx < render_dist; cx ++) {
         for (int cz = -render_dist; cz < render_dist; cz ++) {
-            ChunkId nid(pos.x+cx, pos.y+0, pos.z+cz);
+            IndexId nid(pos.x+cx, pos.y+0, pos.z+cz);
             auto already_exists = std::ranges::any_of(live_chunks, [nid](LiveChunk const& chunk) {
                 return nid == chunk.block_data.id;
             });
@@ -52,7 +52,7 @@ void World::dirty_check() {
     auto [north, west, south, east, up, down] = find_neighbors(c.block_data.id);
     recompute_mesh(c, north, west, south, east, up, down);
 }
-std::optional<LiveChunk*> World::find_by_id(ChunkId id) {
+std::optional<LiveChunk*> World::find_by_id(IndexId id) {
     auto location = std::ranges::find_if(this->live_chunks, 
         [id](LiveChunk const& chunk) {
             return chunk.block_data.id == id;
@@ -60,13 +60,13 @@ std::optional<LiveChunk*> World::find_by_id(ChunkId id) {
     if (location == live_chunks.end()) return std::nullopt;
     return &(*location);
 }
-std::array<std::optional<LiveChunk*>, 6> World::find_neighbors(ChunkId id) {
+std::array<std::optional<LiveChunk*>, 6> World::find_neighbors(IndexId id) {
     auto posid = id;
-    auto north = find_by_id(ChunkId(posid.x, posid.y, posid.z-1));
-    auto west =  find_by_id(ChunkId(posid.x-1, posid.y, posid.z));
-    auto south = find_by_id(ChunkId(posid.x, posid.y, posid.z+1));
-    auto east =  find_by_id(ChunkId(posid.x+1, posid.y, posid.z));
-    auto up =    find_by_id(ChunkId(posid.x, posid.y+1, posid.z));
-    auto down =  find_by_id(ChunkId(posid.x, posid.y-1, posid.z));
+    auto north = find_by_id(IndexId(posid.x, posid.y, posid.z-1));
+    auto west =  find_by_id(IndexId(posid.x-1, posid.y, posid.z));
+    auto south = find_by_id(IndexId(posid.x, posid.y, posid.z+1));
+    auto east =  find_by_id(IndexId(posid.x+1, posid.y, posid.z));
+    auto up =    find_by_id(IndexId(posid.x, posid.y+1, posid.z));
+    auto down =  find_by_id(IndexId(posid.x, posid.y-1, posid.z));
     return {north, west, south, east, up, down};
 }
