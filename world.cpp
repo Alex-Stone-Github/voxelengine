@@ -1,5 +1,7 @@
 #include "world.hpp"
 
+#include "network.hpp"
+
 
 ChunkData generate(IndexId id) {
     ChunkData data;
@@ -31,7 +33,11 @@ void World::reload_check(IndexId pos) {
             // Generate a new chunk from local data
             std::lock_guard<std::mutex> lock(lcguard);
             auto lc = lcchunk.find(nid);
-            if (lc == lcchunk.end()) continue; // TODO: Do not generate the chunk
+            if (lc == lcchunk.end()) {
+                // Make Network Request
+                net::ClientGetChunkFull(nid);
+                continue; // Cannot Load Chunk Yet
+            }
             lock.~lock_guard();
 
 

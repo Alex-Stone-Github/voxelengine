@@ -114,11 +114,6 @@ int main() {
         if (keys_down.contains(SDL_SCANCODE_SPACE)) camera.position.y += 0.1;
         if (keys_down.contains(SDL_SCANCODE_LSHIFT)) camera.position.y -= 0.1;
 
-        if (keys_down.contains(SDL_SCANCODE_L)) {
-            net::ClientGetChunkFull(IndexId(1, 0, 0));
-            sleep(1);
-        }
-
         // Clear Buffers before next rendering
         glViewport(0, 0, width, height);
         glClearColor(0.8, 0.8, 1.0, 1.0);

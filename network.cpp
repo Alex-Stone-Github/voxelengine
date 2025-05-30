@@ -63,9 +63,9 @@ void net::spinup(World* world) {
                 auto section_id = ntohl(*reinterpret_cast<uint32_t*>(&incoming.data()[i])); i += 4;
                 //std::println("Uncovered section {}", section_id);
                 if (section_id == 0) {
-                    auto cidx = ntohl(*reinterpret_cast<int32_t*>(&incoming.data()[i])); i += sizeof(uint32_t);
-                    auto cidy = ntohl(*reinterpret_cast<int32_t*>(&incoming.data()[i])); i += sizeof(uint32_t);
-                    auto cidz = ntohl(*reinterpret_cast<int32_t*>(&incoming.data()[i])); i += sizeof(uint32_t);
+                    auto cidx = ntohl(*reinterpret_cast<int32_t*>(&incoming.data()[i])); i += sizeof(int32_t);
+                    auto cidy = ntohl(*reinterpret_cast<int32_t*>(&incoming.data()[i])); i += sizeof(int32_t);
+                    auto cidz = ntohl(*reinterpret_cast<int32_t*>(&incoming.data()[i])); i += sizeof(int32_t);
 
                     // Skip Chunk Data
                     auto skip = sizex * sizey * sizez * sizeof(uint8_t);
