@@ -13,9 +13,6 @@ This is a simple voxel rendering engine, inspired by games like Minecraft.
 # License
 Checkout [LICENSE](./LICENSE).
 
-# Vendor Assets
-Checkout [doc/assets.md](./doc/assets.md).
-
 # Running
 ## Linux
 - Download the source code, including stb into the vendor folder.
@@ -27,6 +24,8 @@ Run the following to startup the server and client together:
 ```sh
 sh bootstrap.sh
 ```
-
 # Early Build
 ![Early](./doc/cover.png)
+
+# Vendor Assets
+Checkout [doc/assets.md](./doc/assets.md).
