@@ -19,6 +19,9 @@ Checkout [LICENSE](./LICENSE).
 - Ensure dependencies are installed `glew`, `sdl2`.
 - Run `make run`.
 
+## Windows
+best of luck  
+
 ## Alternate
 Run the following to startup the server and client together:
 ```sh
