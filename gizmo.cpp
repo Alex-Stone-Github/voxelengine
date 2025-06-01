@@ -2,8 +2,8 @@
 
 #include <GL/glew.h>
 #define GLM_ENABLE_EXPERIMENTAL
-#include <glm/glm.hpp>
-#include <glm/gtx/transform.hpp>
+#include "glm/glm.hpp"
+#include "glm/gtx/transform.hpp"
 
 Gizmo::Gizmo(Vector3 const* vertices, Vector2 const* uvcords, size_t vertex_count, Vector3 position):
     vertex_count(vertex_count), position(position) {

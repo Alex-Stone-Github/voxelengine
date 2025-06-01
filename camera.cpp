@@ -3,9 +3,12 @@
 
 #include <cmath>
 #include <GL/glew.h>
+
 #define GLM_ENABLE_EXPERIMENTAL
-#include <glm/glm.hpp>
-#include <glm/gtx/transform.hpp>
+#include "glm/glm.hpp"
+#include "glm/gtx/transform.hpp"
+
+
 
 void set_view_matrices(Camera const& camera, unsigned int program) {
     unsigned int location;
