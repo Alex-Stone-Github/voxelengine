@@ -35,29 +35,6 @@ impl Game {
 fn main() {
     // Game State
     let mut game = Game::new();
-    /* 
-    game.world.insert(
-        IndexId{x:1,y:0,z:0}, ChunkData{
-            blocks: [[[Block::Grass; CSIZE]; CSIZE]; CSIZE]
-        }
-    );
-    game.world.insert(
-        IndexId{x:0,y:0,z:1}, ChunkData{
-            blocks: [[[Block::Stone; CSIZE]; CSIZE]; CSIZE]
-        }
-    );
-    game.world.insert(
-        IndexId{x:-1,y:0,z:-1}, ChunkData{
-            blocks: [[[Block::Stone; CSIZE]; CSIZE]; CSIZE]
-        }
-    );
-    game.world.insert(
-        IndexId{x:-1,y:0,z:0}, generate::generate(IndexId{x:-1,y:0,z:0})
-    );
-    game.world.insert(
-        IndexId{x:-2,y:0,z:0}, generate::generate(IndexId{x:-2,y:0,z:0})
-    );
-    */
     const DST: i32 = 3;
     for x in -DST..DST {
         for z in -DST..DST {
