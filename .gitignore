@@ -3,3 +3,4 @@ main
 voxelserver/target
 voxelserver/Cargo.lock
 main.exe
+build
