@@ -5,7 +5,11 @@
 #include "chunk.hpp"
 #include "display.hpp"
 
+#ifdef WIN
+#include "GL/glew.h"
+#else
 #include <GL/glew.h>
+#endif
 #define GLM_ENABLE_EXPERIMENTAL
 #include "glm/glm.hpp"
 #include "glm/gtx/transform.hpp"

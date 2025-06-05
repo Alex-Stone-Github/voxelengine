@@ -8,7 +8,11 @@
 #include <memory>
 #include <optional> 
 #include <iostream>
+#ifdef WIN
+#include "GL/glew.h"
+#else
 #include <GL/glew.h>
+#endif
 
 std::string read_file(std::string const& path) {
     char buffer[512] = {0};
@@ -25,9 +29,9 @@ std::string read_file(std::string const& path) {
     fclose(file);
     return file_content;
 }
-uint create_shader(std::string const& path, uint type) {
+unsigned int create_shader(std::string const& path, unsigned int type) {
     auto const text = read_file(path);
-    uint shader = glCreateShader(type);
+    unsigned int shader = glCreateShader(type);
     char const* cont = text.data();
     int len = text.length();
     glShaderSource(shader, 1, &cont, &len);
@@ -45,9 +49,9 @@ uint create_shader(std::string const& path, uint type) {
     }
     return shader;
 }
-uint create_program(std::span<uint> const& shaders) {
-    uint program = glCreateProgram();
-    std::ranges::for_each(shaders, [=](uint shader){
+unsigned int create_program(std::span<unsigned int> const& shaders) {
+    unsigned int program = glCreateProgram();
+    std::ranges::for_each(shaders, [=](unsigned int shader){
         glAttachShader(program, shader);
     });
     glLinkProgram(program);

@@ -3,7 +3,11 @@
 #define STB_IMAGE_IMPLEMENTATION
 #include "vender/stb/stb_image.h"
 
+#ifdef WIN
+#include "GL/glew.h"
+#else
 #include <GL/glew.h>
+#endif
 
 Image::Image(std::string const& path, unsigned int spot): spot(spot) {
     int throwit;

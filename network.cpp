@@ -6,26 +6,17 @@
 #include <ranges>
 #include <print>
 #include <cstring>
+#include <unistd.h>
 
-// File descriptor for network
-static int connection = 1; // stdout lol
-
-bool net::init() {
-    connection = socket(AF_INET, SOCK_STREAM, 0);
-    if (connection == -1) return false;
-
-    // Localhost
-    struct sockaddr_in localhost8000;
-    localhost8000.sin_family = AF_INET;
-    localhost8000.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
-    localhost8000.sin_port = htons(8000);
-
-    auto success = connect(connection,
-        (sockaddr const*)&localhost8000, 
-        sizeof(struct sockaddr_in)) >= 0;
-    if (!success) return false;
-    return true;
+// Reverse the endianness
+int ntohl(int host_int) {
+    int tmp = host_int;
+    uint8_t* bytes = reinterpret_cast<uint8_t*>(&tmp);
+    uint8_t new_bytes[] = {bytes[3], bytes[2], bytes[1], bytes[0]};
+    return *reinterpret_cast<int*>(new_bytes);
 }
+
+
 
 template<typename Width4Type>
 std::array<uint8_t, 4> to_net_bytes(Width4Type mnum) {
@@ -45,7 +36,7 @@ void net::spinup(World* world) {
     };
     while (true) {
         // Read More Bytes
-        auto length = read(connection, buffer, sizeof(buffer));
+        auto length = plateform_read(buffer, sizeof(buffer));
         if (length < 0) continue; // Error Handling
         for (int i = 0; i < length; i ++) {
             incoming.push_back(buffer[i]);
@@ -114,7 +105,7 @@ void net::ClientGetChunkUpdate(IndexId chid) { // id 0
     std::ranges::copy(zbytes, std::back_inserter(sendbuffer));
 
     // Packet Ready
-    write(connection, sendbuffer.data(), sendbuffer.size());
+    plateform_write(sendbuffer.data(), sendbuffer.size());
 }
 void net::ClientGetChunkFull(IndexId chid) { // id 1
     std::vector<uint8_t> sendbuffer;
@@ -139,7 +130,7 @@ void net::ClientGetChunkFull(IndexId chid) { // id 1
     std::ranges::copy(zbytes, std::back_inserter(sendbuffer));
 
     // Packet Ready
-    write(connection, sendbuffer.data(), sendbuffer.size());
+    plateform_write(sendbuffer.data(), sendbuffer.size());
 
 }
 void net::ClientSendChunkUpdate(IndexId chid, IndexId blkid, uint8_t blk) { // id2

@@ -6,5 +6,5 @@
 
 
 
-uint create_shader(std::string const& path, uint type);
-uint create_program(std::span<uint> const& shaders);
+unsigned int create_shader(std::string const& path, unsigned int type);
+unsigned int create_program(std::span<unsigned int> const& shaders);

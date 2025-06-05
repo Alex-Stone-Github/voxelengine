@@ -2,6 +2,7 @@
 
 #include "network.hpp"
 
+#include <cmath>
 
 ChunkData generate(IndexId id) {
     ChunkData data;

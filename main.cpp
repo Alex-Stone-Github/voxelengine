@@ -1,4 +1,4 @@
-#include <print>
+#include <iostream>
 #include <cassert>
 #include <string>
 #include <memory>
@@ -6,9 +6,15 @@
 #include <cmath>
 #include <fstream>
 #include <set>
-#include <SDL2/SDL.h>
-#include <GL/glew.h>
 #include <thread>
+#ifdef WIN
+#include "GL/glew.h"
+#define SDL_MAIN_HANDLED
+#include "SDL2/SDL.h"
+#else
+#include <GL/glew.h>
+#include <SDL2/SDL.h>
+#endif
 
 #include "shader.hpp"
 #include "camera.hpp"
@@ -60,7 +66,7 @@ int main() {
     // Shaders -------------------
     auto vert = create_shader("./shader/vert.glsl", GL_VERTEX_SHADER);
     auto frag = create_shader("./shader/frag.glsl", GL_FRAGMENT_SHADER);
-    uint tmp[] = {vert, frag};
+    unsigned int tmp[] = {vert, frag};
     auto program = create_program(tmp);
     glDeleteShader(vert);
     glDeleteShader(frag);
@@ -69,7 +75,7 @@ int main() {
     Image atlas("./picture/atlas.png", 1);
 
     // Network
-    std::println("Network Initialization Successful: {}", net::init());
+    std::cout << "Network Initialization Successful: " << net::plateform_init() << std::endl;
     net::ClientGetChunkUpdate(IndexId(69, 70, 80));
     // Thread Spinning
     std::thread netthread(net::spinup, &world);
@@ -103,13 +109,14 @@ int main() {
             camera.position.z += cos(camera.yaw)*.1;
             camera.position.x += sin(camera.yaw)*.1;
         }
+        constexpr auto HALF_PI = 3.1415 / 2.0;
         if (keys_down.contains(SDL_SCANCODE_A)) {
-            camera.position.z -= cos(camera.yaw+M_PI_2)*.1;
-            camera.position.x -= sin(camera.yaw+M_PI_2)*.1;
+            camera.position.z -= cos(camera.yaw+HALF_PI)*.1;
+            camera.position.x -= sin(camera.yaw+HALF_PI)*.1;
         }
         if (keys_down.contains(SDL_SCANCODE_D)) {
-            camera.position.z -= cos(camera.yaw-M_PI_2)*.1;
-            camera.position.x -= sin(camera.yaw-M_PI_2)*.1;
+            camera.position.z -= cos(camera.yaw-HALF_PI)*.1;
+            camera.position.x -= sin(camera.yaw-HALF_PI)*.1;
         }
         if (keys_down.contains(SDL_SCANCODE_SPACE)) camera.position.y += 0.1;
         if (keys_down.contains(SDL_SCANCODE_LSHIFT)) camera.position.y -= 0.1;
@@ -141,6 +148,7 @@ int main() {
     }
 
     // Cleanup
+    net::plateform_cleanup();
     glDeleteProgram(program);
     SDL_DestroyWindow(window);
     SDL_Quit();

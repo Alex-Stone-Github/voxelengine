@@ -2,7 +2,11 @@
 #include "display.hpp"
 
 #include <cmath>
+#ifdef WIN
+#include "GL/glew.h"
+#else
 #include <GL/glew.h>
+#endif
 
 #define GLM_ENABLE_EXPERIMENTAL
 #include "glm/glm.hpp"
@@ -32,6 +36,7 @@ void set_view_matrices(Camera const& camera, unsigned int program) {
 
 }
 void Camera::clamp() {
-    pitch = fmin(pitch, M_PI_2);
-    pitch = fmax(pitch, -M_PI_2);
+    constexpr auto PI_OVER_2 = 3.1415 / 2.0;
+    pitch = fmin(pitch, PI_OVER_2);
+    pitch = fmax(pitch, -PI_OVER_2);
 }

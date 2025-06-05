@@ -1,20 +1,24 @@
 #pragma once
 
-#include <netinet/in.h>
-#include <unistd.h>
-#include <sys/socket.h>
 #include <cstdint>
 
 #include "chunk.hpp"
 #include "world.hpp"
 
 namespace net {
-// Initialize the network (true on success)
-bool init(); 
-void spinup(World*);
 
+// Plateform Specific Overides
+bool plateform_init();
+ssize_t plateform_read(void* buffer, size_t count);
+ssize_t plateform_write(void const* buffer, size_t count);
+void plateform_cleanup();
+
+///////////////////////
+///Generic Functions///
+///////////////////////
+// Initialize the network (true on success)
+void spinup(World*);
 // Protocol Names (hence different specific naming case)
-// TODO: New packet for bulk requests
 void ClientGetChunkUpdate(IndexId);
 void ClientGetChunkFull(IndexId);
 void ClientSendChunkUpdate(IndexId, IndexId, uint8_t);
