@@ -1,7 +1,7 @@
 echo "Running Voxel Game(Make sure valid binaries are built)!"
 
 echo "Starting Server!"
-./voxelserver/target/debug/voxelserver&
+./voxelserver&
 
 sleep 1
 

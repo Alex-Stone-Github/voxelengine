@@ -78,7 +78,8 @@ int main() {
     std::cout << "Network Initialization Successful: " << net::plateform_init() << std::endl;
     net::ClientGetChunkUpdate(IndexId(69, 70, 80));
     // Thread Spinning
-    std::thread netthread(net::spinup, &world);
+    // TODO: BUG for windows compat
+    //std::thread netthread(net::spinup, &world);
 
     // SDL
     bool running = true;

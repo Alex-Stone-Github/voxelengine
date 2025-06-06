@@ -25,7 +25,7 @@ std::array<uint8_t, 4> to_net_bytes(Width4Type mnum) {
     return {lit_end[3], lit_end[2], lit_end[1], lit_end[0]};
 }
 
-
+/*
 void net::spinup(World* world) {
     static char buffer[1024]; // TODO: EXpand
     std::vector<uint8_t> incoming;
@@ -80,6 +80,7 @@ void net::spinup(World* world) {
 
     }
 }
+*/
 
 
 void net::ClientGetChunkUpdate(IndexId chid) { // id 0
