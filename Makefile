@@ -11,6 +11,7 @@ linux: linux-bin
 	-cp $(out) build
 	-cp shader build -r
 	-cp picture build -r
+	-cp doc build -r
 	-cp README.md build
 	-cp bootstrap-linux.sh build
 	-cp voxelserver/target/debug/voxelserver build
@@ -21,4 +22,5 @@ run: all
 	./$(out)
 
 clean:
-	rm $(out)
+	-rm $(out)
+	-rm build
