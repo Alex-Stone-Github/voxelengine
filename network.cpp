@@ -28,7 +28,7 @@ bool net::init() {
 }
 
 template<typename Width4Type>
-std::array<uint8_t, 4> to_net_bytes(Width4Type mnum) {
+std::array<uint8_t, 4> reverse_endian(Width4Type mnum) {
     static_assert(sizeof(Width4Type) == 4, "Width4Type needs to be 4 bytes");
     uint8_t* lit_end = reinterpret_cast<uint8_t*>(&mnum);
     return {lit_end[3], lit_end[2], lit_end[1], lit_end[0]};
@@ -96,18 +96,18 @@ void net::ClientGetChunkUpdate(IndexId chid) { // id 0
 
     // Add a header
     auto size = sizeof(uint32_t) + sizeof(uint32_t) + sizeof(IndexId);
-    auto header_bytes = to_net_bytes(static_cast<uint32_t>(size));
+    auto header_bytes = reverse_endian(static_cast<uint32_t>(size));
     std::ranges::copy(header_bytes, std::back_inserter(sendbuffer));
 
     // Add a section id
     uint32_t secid = 0;
-    auto secid_bytes = to_net_bytes(secid);
+    auto secid_bytes = reverse_endian(secid);
     std::ranges::copy(secid_bytes, std::back_inserter(sendbuffer));
 
     // Add Everything
-    auto xbytes = to_net_bytes(chid.x);
-    auto ybytes = to_net_bytes(chid.y);
-    auto zbytes = to_net_bytes(chid.z);
+    auto xbytes = reverse_endian(chid.x);
+    auto ybytes = reverse_endian(chid.y);
+    auto zbytes = reverse_endian(chid.z);
 
     std::ranges::copy(xbytes, std::back_inserter(sendbuffer));
     std::ranges::copy(ybytes, std::back_inserter(sendbuffer));
@@ -121,18 +121,18 @@ void net::ClientGetChunkFull(IndexId chid) { // id 1
 
     // Add a header
     auto size = sizeof(uint32_t) + sizeof(uint32_t) + sizeof(IndexId);
-    auto header_bytes = to_net_bytes(static_cast<uint32_t>(size));
+    auto header_bytes = reverse_endian(static_cast<uint32_t>(size));
     std::ranges::copy(header_bytes, std::back_inserter(sendbuffer));
 
     // Add a section id
     uint32_t secid = 1;
-    auto secid_bytes = to_net_bytes(secid);
+    auto secid_bytes = reverse_endian(secid);
     std::ranges::copy(secid_bytes, std::back_inserter(sendbuffer));
 
     // Add Everything
-    auto xbytes = to_net_bytes(chid.x);
-    auto ybytes = to_net_bytes(chid.y);
-    auto zbytes = to_net_bytes(chid.z);
+    auto xbytes = reverse_endian(chid.x);
+    auto ybytes = reverse_endian(chid.y);
+    auto zbytes = reverse_endian(chid.z);
 
     std::ranges::copy(xbytes, std::back_inserter(sendbuffer));
     std::ranges::copy(ybytes, std::back_inserter(sendbuffer));
