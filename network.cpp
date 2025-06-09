@@ -7,25 +7,6 @@
 #include <print>
 #include <cstring>
 
-// File descriptor for network
-static int connection = 1; // stdout lol
-
-bool net::init() {
-    connection = socket(AF_INET, SOCK_STREAM, 0);
-    if (connection == -1) return false;
-
-    // Localhost
-    struct sockaddr_in localhost8000;
-    localhost8000.sin_family = AF_INET;
-    localhost8000.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
-    localhost8000.sin_port = htons(8000);
-
-    auto success = connect(connection,
-        (sockaddr const*)&localhost8000, 
-        sizeof(struct sockaddr_in)) >= 0;
-    if (!success) return false;
-    return true;
-}
 
 template<typename Width4Type>
 std::array<uint8_t, 4> reverse_endian(Width4Type mnum) {
@@ -34,6 +15,12 @@ std::array<uint8_t, 4> reverse_endian(Width4Type mnum) {
     return {lit_end[3], lit_end[2], lit_end[1], lit_end[0]};
 }
 
+// Tmp
+int ntohl(int src) {
+    auto bytes = reinterpret_cast<uint8_t*>(&src);
+    uint8_t tmp[] = {bytes[3], bytes[2], bytes[1], bytes[0]};
+    return *reinterpret_cast<int*>(tmp);
+}
 
 void net::spinup(World* world) {
     static char buffer[1024]; // TODO: EXpand
@@ -45,7 +32,7 @@ void net::spinup(World* world) {
     };
     while (true) {
         // Read More Bytes
-        auto length = read(connection, buffer, sizeof(buffer));
+        auto length = net::pl_read(buffer, sizeof(buffer));
         if (length < 0) continue; // Error Handling
         for (int i = 0; i < length; i ++) {
             incoming.push_back(buffer[i]);
@@ -114,7 +101,7 @@ void net::ClientGetChunkUpdate(IndexId chid) { // id 0
     std::ranges::copy(zbytes, std::back_inserter(sendbuffer));
 
     // Packet Ready
-    write(connection, sendbuffer.data(), sendbuffer.size());
+    net::pl_write(reinterpret_cast<const char*>(sendbuffer.data()), sendbuffer.size());
 }
 void net::ClientGetChunkFull(IndexId chid) { // id 1
     std::vector<uint8_t> sendbuffer;
@@ -139,7 +126,7 @@ void net::ClientGetChunkFull(IndexId chid) { // id 1
     std::ranges::copy(zbytes, std::back_inserter(sendbuffer));
 
     // Packet Ready
-    write(connection, sendbuffer.data(), sendbuffer.size());
+    net::pl_write(reinterpret_cast<const char*>(sendbuffer.data()), sendbuffer.size());
 
 }
 void net::ClientSendChunkUpdate(IndexId chid, IndexId blkid, uint8_t blk) { // id2

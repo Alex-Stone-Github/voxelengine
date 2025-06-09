@@ -6,9 +6,8 @@
 #include "display.hpp"
 
 #include <GL/glew.h>
-#define GLM_ENABLE_EXPERIMENTAL
-#include <glm/glm.hpp>
-#include <glm/gtx/transform.hpp>
+#include "glm/glm.hpp"
+#include "glm/gtx/transform.hpp"
 
 LiveChunk::LiveChunk(ChunkData const& block_data):
     vertex_count(0), dirty(true) {

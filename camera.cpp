@@ -3,9 +3,8 @@
 
 #include <cmath>
 #include <GL/glew.h>
-#define GLM_ENABLE_EXPERIMENTAL
-#include <glm/glm.hpp>
-#include <glm/gtx/transform.hpp>
+#include "glm/glm.hpp"
+#include "glm/gtx/transform.hpp"
 
 void set_view_matrices(Camera const& camera, unsigned int program) {
     unsigned int location;
@@ -29,6 +28,7 @@ void set_view_matrices(Camera const& camera, unsigned int program) {
 
 }
 void Camera::clamp() {
-    pitch = fmin(pitch, M_PI_2);
-    pitch = fmax(pitch, -M_PI_2);
+    constexpr auto HALF_PI = 3.1415 / 2.0;
+    pitch = fmin(pitch, HALF_PI);
+    pitch = fmax(pitch, -HALF_PI);
 }

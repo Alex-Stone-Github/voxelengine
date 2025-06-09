@@ -1,10 +1,10 @@
-#include <print>
 #include <cassert>
 #include <string>
 #include <memory>
 #include <algorithm>
 #include <cmath>
 #include <fstream>
+#include <iostream>
 #include <set>
 #include <SDL2/SDL.h>
 #include <GL/glew.h>
@@ -20,6 +20,7 @@
 #include "gizmo.hpp"
 #include "network.hpp"
 
+static constexpr auto HALF_PI = 3.1415 / 2.0;
 static Vector3 const gposition[] = {
     {1, 1, 0},
     {-1, 1, 0},
@@ -34,33 +35,44 @@ static Vector2 const gtexture[] = {
 };
 
 int main() {
+    std::cout << "Starting Initialization!" << std::endl;
     assert(SDL_Init(SDL_INIT_EVERYTHING) == 0);
     SDL_Window* window = SDL_CreateWindow("Triangle",
         SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, width, height,
         SDL_WINDOW_OPENGL);
     assert(window);
     SDL_GLContext glcontext = SDL_GL_CreateContext(window);
+    SDL_GL_MakeCurrent(window, glcontext);
     assert(glcontext);
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3);
-    assert(glewInit() == GLEW_OK);
+    glewExperimental = GL_TRUE;
+    auto status = glewInit();
+    assert(status == GLEW_OK);
     SDL_SetRelativeMouseMode(SDL_TRUE);
 
+    std::cout << "opengl version: " << glGetString(GL_VERSION) << std::endl;
+
+    std::cout << "Creating Game Objects!" << std::endl;
     // Game Objects
     Camera camera(Vector3(0, 32.0, 0), 0, 0);
     IndexId aprxpos(0, 0, 0);
-    Gizmo entity(gposition, gtexture, 4, Vector3(0, 32, -10));
 
+    std::cout << "world / gizmo!" << std::endl;
+    Gizmo entity(gposition, gtexture, 4, Vector3(0, 32, -10));
+    std::cout << "world / gizmo!" << std::endl;
     World world;
     world.lcchunk.insert(std::pair(IndexId(0, 0, 0), generate(IndexId(0, 0, 0))));
     world.lcchunk.insert(std::pair(IndexId(0, 0, -1), generate(IndexId(0, 0, -1))));
     world.lcchunk.insert(std::pair(IndexId(1, 0, -1), generate(IndexId(1, 0, -1))));
     world.lcchunk.insert(std::pair(IndexId(2, 0, -2), generate(IndexId(2, 0, -2))));
 
+    std::cout << "Creating Shaders!" << std::endl;
     // Shaders -------------------
     auto vert = create_shader("./shader/vert.glsl", GL_VERTEX_SHADER);
     auto frag = create_shader("./shader/frag.glsl", GL_FRAGMENT_SHADER);
-    uint tmp[] = {vert, frag};
+    unsigned int tmp[] = {vert, frag};
     auto program = create_program(tmp);
     glDeleteShader(vert);
     glDeleteShader(frag);
@@ -68,8 +80,9 @@ int main() {
     Image etexture("./picture/image.png", 0);
     Image atlas("./picture/atlas.png", 1);
 
+    std::cout << "Connecting to the network!" << std::endl;
     // Network
-    std::println("Network Initialization Successful: {}", net::init());
+    std::cout << "Network Initialization Successful: " << net::pl_open() << std::endl;
     net::ClientGetChunkUpdate(IndexId(69, 70, 80));
     // Thread Spinning
     std::thread netthread(net::spinup, &world);
@@ -104,12 +117,12 @@ int main() {
             camera.position.x += sin(camera.yaw)*.1;
         }
         if (keys_down.contains(SDL_SCANCODE_A)) {
-            camera.position.z -= cos(camera.yaw+M_PI_2)*.1;
-            camera.position.x -= sin(camera.yaw+M_PI_2)*.1;
+            camera.position.z -= cos(camera.yaw+HALF_PI)*.1;
+            camera.position.x -= sin(camera.yaw+HALF_PI)*.1;
         }
         if (keys_down.contains(SDL_SCANCODE_D)) {
-            camera.position.z -= cos(camera.yaw-M_PI_2)*.1;
-            camera.position.x -= sin(camera.yaw-M_PI_2)*.1;
+            camera.position.z -= cos(camera.yaw-HALF_PI)*.1;
+            camera.position.x -= sin(camera.yaw-HALF_PI)*.1;
         }
         if (keys_down.contains(SDL_SCANCODE_SPACE)) camera.position.y += 0.1;
         if (keys_down.contains(SDL_SCANCODE_LSHIFT)) camera.position.y -= 0.1;
@@ -141,6 +154,7 @@ int main() {
     }
 
     // Cleanup
+    net::pl_close();
     glDeleteProgram(program);
     SDL_DestroyWindow(window);
     SDL_Quit();
