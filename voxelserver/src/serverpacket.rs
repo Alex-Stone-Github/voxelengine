@@ -1,11 +1,12 @@
 use std::fmt::{Display, Pointer};
 
-use crate::{byteutil, core::*};
+use crate::{byteutil, core::*, gametypes::EntityInfo};
 
 #[derive(Clone, Debug)]
 pub enum ServerSection {
     ServerSendFullChunk(IndexId, ChunkData),
     ServerSendBlockUpdate(CompressedBlockUpdate),
+    ServerSendEntityInfo(EntityInfo),
 }
 impl ServerSection {
     pub fn calc_net_size(&self) -> usize {
@@ -17,14 +18,19 @@ impl ServerSection {
             }
             ServerSection::ServerSendBlockUpdate(..) => {
                 std::mem::size_of::<u32>() +
-                std::mem::size_of::<IndexId>()*2+4
+                std::mem::size_of::<IndexId>()*2 +
+                std::mem::size_of::<u32>()
+            }
+            ServerSection::ServerSendEntityInfo(..) => {
+                std::mem::size_of::<u32>() + std::mem::size_of::<EntityInfo>()
             }
         }
     }
     pub fn to_id(&self) -> u32 {
         match self {
             ServerSection::ServerSendFullChunk(..) => 0,
-            ServerSection::ServerSendBlockUpdate(..) => 1
+            ServerSection::ServerSendBlockUpdate(..) => 1,
+            ServerSection::ServerSendEntityInfo(..) => 2,
         }
     }
     pub fn to_net_bytes(&self) -> Box<[u8]> {
@@ -45,7 +51,7 @@ impl ServerSection {
                         }
                     }
                 }
-            },
+            }
             ServerSection::ServerSendBlockUpdate(cbu) => {
                 bytes.extend_from_slice(&byteutil::i32_to_bytes(cbu.chunk.x));
                 bytes.extend_from_slice(&byteutil::i32_to_bytes(cbu.chunk.y));
@@ -56,6 +62,13 @@ impl ServerSection {
                 bytes.extend_from_slice(&byteutil::i32_to_bytes(cbu.block.z));
 
                 bytes.extend_from_slice(&byteutil::u32_to_bytes(cbu.new.to_id()));
+            }
+            ServerSection::ServerSendEntityInfo(info) => {
+                bytes.extend_from_slice(&byteutil::f32_to_bytes(info.position.x));
+                bytes.extend_from_slice(&byteutil::f32_to_bytes(info.position.y));
+                bytes.extend_from_slice(&byteutil::f32_to_bytes(info.position.z));
+                // yaw
+                bytes.extend_from_slice(&byteutil::f32_to_bytes(info.yaw));
             }
         }
         bytes.into_boxed_slice()

@@ -4,8 +4,10 @@ use std::io::Write;
 use crate::byteutil;
 use crate::clientpacket;
 use crate::clientpacket::*;
+use crate::gametypes::EntityInfo;
 use crate::serverpacket::*;
 use crate::core::*;
+use crate::gametypes::Vector3;
 
 
 
@@ -34,6 +36,7 @@ impl GameClient {
         ChunkData>) {
         // Read More bytes
         let mut buffer: [u8; 1024*8] = [0; 1024*8];
+        // TODO / BUG: This call blocks and will wait until we have more bytes / Crazy
         if let Ok(len) = self.connection.read(buffer.as_mut_slice()) {
             let new_bytes = &buffer[0..len];
             self.incoming_bytes.extend_from_slice(
@@ -41,18 +44,17 @@ impl GameClient {
             );
         }
         // Attempt to construct an incoming packet
-        let mut packet = IncomingPacket(vec![]);
+        let mut incoming_packet = IncomingPacket(vec![]);
         if let Some(packet_len) = self.packet_len_hint() {
             if packet_len <= self.incoming_bytes.len() {
                 let bytes = &self.incoming_bytes[0..packet_len];
-                packet = clientpacket::IncomingPacket::from_buffer(bytes)
+                incoming_packet = clientpacket::IncomingPacket::from_buffer(bytes)
                     .expect("Invalid Packet");
                 self.incoming_bytes.drain(0..packet_len);
             }
         }
-        dbg!(&packet);
         // Make updates to local information and send relevant
-        for section in packet.0 {
+        for section in incoming_packet.0 {
             if let ClientSection::ClientGetChunkFull(chunkid) = section {
                 // We are requesting the full chunk
                 let exists = world.keys().any(|id| *id == chunkid);
@@ -62,6 +64,19 @@ impl GameClient {
                 self.outgoing.0.push(section);
             }
         }
+        self.outgoing.0.push(
+            ServerSection::ServerSendEntityInfo(EntityInfo{
+                position: Vector3::new(1.0, 32.0, -3.0),
+                yaw: 0.0,
+            })
+        ); // Add to the outgoing
+        self.outgoing.0.push(
+            ServerSection::ServerSendEntityInfo(EntityInfo{
+                position: Vector3::new(69.0, 30.0, -69.0),
+                yaw: std::f32::consts::FRAC_PI_2,
+            })
+        ); // Add to the outgoing
+
         // Send appropriate information out
         println!("Send Packet with {} sections and {} length", self.outgoing.0.len(), self.outgoing.calulate_net_size());
         let buffer = self.outgoing.into_buffer();

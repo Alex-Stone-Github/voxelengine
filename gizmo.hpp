@@ -17,7 +17,7 @@ struct Gizmo {
     // No move or copy for now
     Gizmo(Gizmo const &) = delete;
     Gizmo& operator=(Gizmo const &) = delete;
-    Gizmo(Gizmo&&) = delete;
-    Gizmo& operator=(Gizmo&&) = delete;
+    Gizmo(Gizmo&&);
+    Gizmo& operator=(Gizmo&&);
 };
 void draw_gizmo(Gizmo const& gizmo, Camera const& camera, unsigned int program);

@@ -15,6 +15,7 @@ mod core;
 mod clientpacket;
 mod serverpacket;
 mod generate;
+mod gametypes;
 
 pub type SharedResource<T> = Arc<Mutex<T>>;
 
@@ -35,7 +36,7 @@ impl Game {
 fn main() {
     // Game State
     let mut game = Game::new();
-    const DST: i32 = 3;
+    const DST: i32 = 6;
     for x in -DST..DST {
         for z in -DST..DST {
             game.world.insert(

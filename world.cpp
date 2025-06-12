@@ -31,7 +31,7 @@ void World::reload_check(IndexId pos) {
             if (already_exists) continue;
 
             // Generate a new chunk from local data
-            std::lock_guard<std::mutex> lock(lcguard);
+            std::lock_guard<std::mutex> lock(localchunk_guard);
             auto lc = lcchunk.find(nid);
             if (lc == lcchunk.end()) {
                 // Make Network Request

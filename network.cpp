@@ -4,9 +4,21 @@
 #include <vector>
 #include <algorithm>
 #include <ranges>
-#include <print>
 #include <cstring>
+#include <iostream>
 
+static Vector3 const gposition[] = {
+    {1, 1, 0},
+    {-1, 1, 0},
+    {-1, -1, 0},
+    {1, -1, 0},
+};
+static Vector2 const gtexture[] = {
+    {1, 1},
+    {0, 1},
+    {0, 0},
+    {1, 0},
+};
 
 template<typename Width4Type>
 std::array<uint8_t, 4> reverse_endian(Width4Type mnum) {
@@ -20,6 +32,11 @@ int ntohl(int src) {
     auto bytes = reinterpret_cast<uint8_t*>(&src);
     uint8_t tmp[] = {bytes[3], bytes[2], bytes[1], bytes[0]};
     return *reinterpret_cast<int*>(tmp);
+}
+float ntohf(float src) {
+    auto bytes = reinterpret_cast<uint8_t*>(&src);
+    uint8_t tmp[] = {bytes[3], bytes[2], bytes[1], bytes[0]};
+    return *reinterpret_cast<float*>(tmp);
 }
 
 void net::spinup(World* world) {
@@ -43,26 +60,46 @@ void net::spinup(World* world) {
         auto condition = plen.has_value() && plen.value() <= incoming.size();
         if (condition) {
             // Start Work with packet
-            //std::println("Length of data: {}: PLEN: {}", incoming.size(), plen.value());
             auto i = sizeof(uint32_t); // Packet Length
-            while (i < plen.value()) {
+
+            // Remove Entities! - Every server update
+            /*
+            std::lock_guard<std::mutex> lock(world->entity_guard);
+            world->entities.clear();
+            lock.~lock_guard();
+            */
+
+            while (i < plen.value()) { // Iterate through packets of dynamic length
                 // What section
                 auto section_id = ntohl(*reinterpret_cast<uint32_t*>(&incoming.data()[i])); i += 4;
-                //std::println("Uncovered section {}", section_id);
-                if (section_id == 0) {
+                if (section_id == 2) { // Entity Info
+                    auto x =   ntohf(*reinterpret_cast<float*>(&incoming.data()[i])); i += sizeof(float);
+                    auto y =   ntohf(*reinterpret_cast<float*>(&incoming.data()[i])); i += sizeof(float);
+                    auto z =   ntohf(*reinterpret_cast<float*>(&incoming.data()[i])); i += sizeof(float);
+                    auto yaw = ntohf(*reinterpret_cast<float*>(&incoming.data()[i])); i += sizeof(float);
+                    std::cout << "Writing Stuff" << x << " " << y << " " << z << " " << yaw << std::endl;
+                    // BUG: NOt adding yaw yet
+                    /*
+                    auto pos = Vector3(x, y, z);
+                    Gizmo g(gposition, gtexture, 4, pos);
+                    std::lock_guard<std::mutex> lock(world->entity_guard);
+                    world->entities.emplace_back(std::move(g));
+                    lock.~lock_guard();
+                    */
+                }
+                if (section_id == 0) { // Full chunk
                     auto cidx = ntohl(*reinterpret_cast<int32_t*>(&incoming.data()[i])); i += sizeof(int32_t);
                     auto cidy = ntohl(*reinterpret_cast<int32_t*>(&incoming.data()[i])); i += sizeof(int32_t);
                     auto cidz = ntohl(*reinterpret_cast<int32_t*>(&incoming.data()[i])); i += sizeof(int32_t);
 
                     // Skip Chunk Data
                     auto skip = sizex * sizey * sizez * sizeof(uint8_t);
-                    //std::println("ID{},{},{}   Blocks:{}", cidx, cidy, cidz, skip);
 
                     ChunkData chunk_data;
                     memcpy(&chunk_data.blocks, &incoming.data()[i], skip);
                     auto id = IndexId(cidx, cidy, cidz);
                     chunk_data.id = id;
-                    std::lock_guard<std::mutex> lock(world->lcguard);
+                    std::lock_guard<std::mutex> lock(world->localchunk_guard);
                     world->lcchunk.insert(std::pair(
                         id, chunk_data
                     ));

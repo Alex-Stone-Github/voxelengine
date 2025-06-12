@@ -9,6 +9,7 @@
 #include <mutex>
 
 #include "chunk.hpp"
+#include "gizmo.hpp"
 
 ChunkData generate(IndexId id); // TODO: Hopefluly remove
 
@@ -16,9 +17,14 @@ ChunkData generate(IndexId id); // TODO: Hopefluly remove
 struct World {
     static constexpr size_t render_dist = 2;
     std::vector<LiveChunk> live_chunks;
-    std::mutex lcguard;
+
+    // Chunks
+    std::mutex localchunk_guard;
     std::unordered_map<IndexId, ChunkData, IndexHash> lcchunk;
 
+    // Entities
+    std::mutex entity_guard;
+    std::vector<Gizmo> entities;
 
     void reload_check(IndexId pos);
     void dirty_check();

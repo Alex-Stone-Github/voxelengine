@@ -1,11 +1,13 @@
 use crate::core::*;
 use crate::byteutil;
+use crate::gametypes::*;
 
 #[derive(PartialEq, Debug)]
 pub enum ClientSection {
     ClientGetChunkUpdate(IndexId),
     ClientGetChunkFull(IndexId),
     ClientSendChunkUpdate(CompressedBlockUpdate),
+    ClientSendPlayerPosUpdate(EntityInfo),
 }
 impl ClientSection {
     fn get_id(&self) -> u32 {
@@ -13,6 +15,7 @@ impl ClientSection {
             ClientSection::ClientGetChunkUpdate(..) => 0,
             ClientSection::ClientGetChunkFull(..) => 1,
             ClientSection::ClientSendChunkUpdate(..) => 2,
+            ClientSection::ClientSendPlayerPosUpdate(..) => 3,
         }
     }
 }
@@ -76,6 +79,19 @@ impl IncomingPacket {
                             }));
                     } else {return  Err(PacketDecodeError);}
                 },
+                4 => { // Send Position Update
+                    let x_bytes = byteutil::take_bytes(&mut bytes, 4);
+                    let x = byteutil::as_f32(&x_bytes);
+                    let y_bytes = byteutil::take_bytes(&mut bytes, 4);
+                    let y = byteutil::as_f32(&y_bytes);
+                    let z_bytes = byteutil::take_bytes(&mut bytes, 4);
+                    let z = byteutil::as_f32(&z_bytes);
+                    let yaw_bytes = byteutil::take_bytes(&mut bytes, 4);
+                    let yaw = byteutil::as_f32(&yaw_bytes);
+                    let position = Vector3{x, y, z};
+                    let ent_info = EntityInfo{position, yaw};
+                    sections.push(ClientSection::ClientSendPlayerPosUpdate(ent_info));
+                }
                 _ => return Err(PacketDecodeError)
             };
         }

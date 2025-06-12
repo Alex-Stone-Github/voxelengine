@@ -39,4 +39,4 @@ run: all
 clean:
 	-rm $(out)
 	-rm $(out).exe
-	-rm build
+	-rm build -rf

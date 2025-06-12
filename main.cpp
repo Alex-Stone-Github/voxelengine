@@ -51,24 +51,20 @@ int main() {
     auto status = glewInit();
     assert(status == GLEW_OK);
     SDL_SetRelativeMouseMode(SDL_TRUE);
-
     std::cout << "opengl version: " << glGetString(GL_VERSION) << std::endl;
 
-    std::cout << "Creating Game Objects!" << std::endl;
+
     // Game Objects
     Camera camera(Vector3(0, 32.0, 0), 0, 0);
     IndexId aprxpos(0, 0, 0);
-
-    std::cout << "world / gizmo!" << std::endl;
-    Gizmo entity(gposition, gtexture, 4, Vector3(0, 32, -10));
-    std::cout << "world / gizmo!" << std::endl;
     World world;
     world.lcchunk.insert(std::pair(IndexId(0, 0, 0), generate(IndexId(0, 0, 0))));
     world.lcchunk.insert(std::pair(IndexId(0, 0, -1), generate(IndexId(0, 0, -1))));
     world.lcchunk.insert(std::pair(IndexId(1, 0, -1), generate(IndexId(1, 0, -1))));
     world.lcchunk.insert(std::pair(IndexId(2, 0, -2), generate(IndexId(2, 0, -2))));
+    world.entities.emplace_back(Gizmo(gposition, gtexture, 4, Vector3(0, 32, -10)));
 
-    std::cout << "Creating Shaders!" << std::endl;
+
     // Shaders -------------------
     auto vert = create_shader("./shader/vert.glsl", GL_VERTEX_SHADER);
     auto frag = create_shader("./shader/frag.glsl", GL_FRAGMENT_SHADER);
@@ -148,7 +144,9 @@ int main() {
             draw_chunk(chunk, camera, program);
         });
         set_texture(program, etexture);
-        draw_gizmo(entity, camera, program);
+        std::ranges::for_each(world.entities, [&](Gizmo const& entity) {
+            draw_gizmo(entity, camera, program);
+        });
 
         SDL_GL_SwapWindow(window);
     }
