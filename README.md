@@ -22,7 +22,7 @@ Checkout [LICENSE](./LICENSE).
 4. Run the executable file depending on your operating system:
 
 ## Windows
-Double click the file `bootstrap-windows.bat` inside of the unzipped release folder in order to run it. This will open multiple log windows for debugging as well.
+Double click the file `bootstrap-windows.bat` inside of the *unzipped* release folder in order to run it. This will open multiple log windows for debugging as well.
 
 ## Linux
 ```bash
