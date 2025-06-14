@@ -64,18 +64,6 @@ impl GameClient {
                 self.outgoing.0.push(section);
             }
         }
-        self.outgoing.0.push(
-            ServerSection::ServerSendEntityInfo(EntityInfo{
-                position: Vector3::new(1.0, 32.0, -3.0),
-                yaw: 0.0,
-            })
-        ); // Add to the outgoing
-        self.outgoing.0.push(
-            ServerSection::ServerSendEntityInfo(EntityInfo{
-                position: Vector3::new(69.0, 30.0, -69.0),
-                yaw: std::f32::consts::FRAC_PI_2,
-            })
-        ); // Add to the outgoing
 
         // Send appropriate information out
         println!("Send Packet with {} sections and {} length", self.outgoing.0.len(), self.outgoing.calulate_net_size());

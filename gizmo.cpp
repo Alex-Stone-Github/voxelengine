@@ -6,8 +6,8 @@
 
 #include <iostream>
 
-Gizmo::Gizmo(Vector3 const* vertices, Vector2 const* uvcords, size_t vertex_count, Vector3 position):
-    vertex_count(vertex_count), position(position) {
+Gizmo::Gizmo(Vector3 const* vertices, Vector2 const* uvcords, size_t vertex_count, EntityTransform transform):
+    vertex_count(vertex_count), transform(transform) {
     glGenVertexArrays(1, &vao);
     glBindVertexArray(vao);
 
@@ -28,8 +28,8 @@ void draw_gizmo(Gizmo const& gizmo, Camera const& camera, unsigned int program) 
 
     // TODO: Transform matrix
     auto location = glGetUniformLocation(program, "transform");
-    auto translate = glm::translate(glm::vec3(gizmo.position.x, gizmo.position.y, gizmo.position.z));
-    auto rotate_yaw = glm::rotate(3.1415f/4.0f, glm::vec3(0.0, 1.0, 0.0));
+    auto translate = glm::translate(glm::vec3(gizmo.transform.position.x, gizmo.transform.position.y, gizmo.transform.position.z));
+    auto rotate_yaw = glm::rotate(gizmo.transform.yaw, glm::vec3(0.0, 1.0, 0.0));
     auto transform = translate * rotate_yaw;
     glUniformMatrix4fv(location, 1, GL_FALSE, &transform[0][0]);
     set_view_matrices(camera, program);
@@ -45,7 +45,7 @@ Gizmo::~Gizmo() {
     glDeleteBuffers(1, &vbot);
 }
 Gizmo::Gizmo(Gizmo&& other):
-vertex_count(other.vertex_count), position(other.position) {
+vertex_count(other.vertex_count), transform(other.transform) {
     vao = other.vao;
     vbop = other.vbop;
     vbot = other.vbot;
@@ -55,7 +55,7 @@ vertex_count(other.vertex_count), position(other.position) {
 }
 Gizmo& Gizmo::operator=(Gizmo&& other) {
     vertex_count = other.vertex_count;
-    position = other.position;
+    transform = other.transform;
     vao = other.vao;
     vbop = other.vbop;
     vbot = other.vbot;

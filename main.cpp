@@ -62,7 +62,7 @@ int main() {
     world.lcchunk.insert(std::pair(IndexId(0, 0, -1), generate(IndexId(0, 0, -1))));
     world.lcchunk.insert(std::pair(IndexId(1, 0, -1), generate(IndexId(1, 0, -1))));
     world.lcchunk.insert(std::pair(IndexId(2, 0, -2), generate(IndexId(2, 0, -2))));
-    world.entities.emplace_back(Gizmo(gposition, gtexture, 4, Vector3(0, 32, -10)));
+    //world.entities.emplace_back(Gizmo(gposition, gtexture, 4, Vector3(0, 32, -10)));
 
 
     // Shaders -------------------
@@ -138,7 +138,16 @@ int main() {
         world.reload_check(aprxpos);
         world.dirty_check();
 
+        // Get the current entities
+        std::cout << "To create: " << world.tocreate_entities.size() << std::endl;
+        world.entities.clear();
+        for (auto const& entity_info : world.tocreate_entities) {
+            world.entities.push_back(Gizmo(gposition, gtexture, 4, entity_info));
+        }
+
+
         // Draw the chunks
+        std::lock_guard<std::mutex> live_chunk_lock(world.localchunk_guard);
         set_texture(program, atlas);
         std::ranges::for_each(world.live_chunks, [&](LiveChunk const& chunk) {
             draw_chunk(chunk, camera, program);

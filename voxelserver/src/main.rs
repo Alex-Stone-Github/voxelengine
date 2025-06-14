@@ -6,7 +6,7 @@ use client::GameClient;
 use serverpacket::{OutgoingPacket, ServerSection};
 use core::{ChunkData, IndexId, CSIZE};
 use std::sync::{Arc, Mutex};
-use crate::core::Block;
+use crate::{core::Block, gametypes::{EntityInfo, Vector3}};
 
 mod listener;
 mod client;
@@ -32,7 +32,6 @@ impl Game {
     }
 }
 
-
 fn main() {
     // Game State
     let mut game = Game::new();
@@ -54,6 +53,26 @@ fn main() {
     loop {
         game.clients.lock().unwrap().iter().for_each(|client| {
             client.lock().unwrap().step(&mut game.world);
+            // Testing Code
+            client.lock().unwrap().outgoing.0.push(ServerSection::ServerSendEntityInfo(
+                EntityInfo {
+                    position: Vector3::new(9.0, 32.0, -9.0),
+                    yaw: std::f32::consts::FRAC_PI_4,
+                }
+            ));
+            client.lock().unwrap().outgoing.0.push(ServerSection::ServerSendEntityInfo(
+                EntityInfo {
+                    position: Vector3::new(0.0, 32.0, -9.0),
+                    yaw: -std::f32::consts::FRAC_PI_4,
+                }
+            ));
+            client.lock().unwrap().outgoing.0.push(ServerSection::ServerSendEntityInfo(
+                EntityInfo {
+                    position: Vector3::new(1.0, 32.0, -3.0),
+                    yaw: 0.0,
+                }
+            ));
         });
+        // Continue?
     }
 }

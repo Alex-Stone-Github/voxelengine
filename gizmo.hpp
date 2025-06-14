@@ -9,9 +9,9 @@
 struct Gizmo {
     unsigned int vao, vbop, vbot;
     int vertex_count;
-    Vector3 position;
+    EntityTransform transform;
 
-    Gizmo(Vector3 const* vertices, Vector2 const* uvcords, size_t vertex_count, Vector3 position);
+    Gizmo(Vector3 const* vertices, Vector2 const* uvcords, size_t vertex_count, EntityTransform transform);
     ~Gizmo();
 
     // No move or copy for now

@@ -9,5 +9,3 @@ sleep 1
 
 echo "Starting Client!"
 ./main
-
-clear

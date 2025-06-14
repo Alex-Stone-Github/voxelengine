@@ -7,19 +7,6 @@
 #include <cstring>
 #include <iostream>
 
-static Vector3 const gposition[] = {
-    {1, 1, 0},
-    {-1, 1, 0},
-    {-1, -1, 0},
-    {1, -1, 0},
-};
-static Vector2 const gtexture[] = {
-    {1, 1},
-    {0, 1},
-    {0, 0},
-    {1, 0},
-};
-
 template<typename Width4Type>
 std::array<uint8_t, 4> reverse_endian(Width4Type mnum) {
     static_assert(sizeof(Width4Type) == 4, "Width4Type needs to be 4 bytes");
@@ -63,11 +50,9 @@ void net::spinup(World* world) {
             auto i = sizeof(uint32_t); // Packet Length
 
             // Remove Entities! - Every server update
-            /*
-            std::lock_guard<std::mutex> lock(world->entity_guard);
-            world->entities.clear();
-            lock.~lock_guard();
-            */
+            std::lock_guard<std::mutex> ent_guard(world->entity_guard);
+            world->tocreate_entities.clear();
+            ent_guard.~lock_guard();
 
             while (i < plen.value()) { // Iterate through packets of dynamic length
                 // What section
@@ -77,15 +62,10 @@ void net::spinup(World* world) {
                     auto y =   ntohf(*reinterpret_cast<float*>(&incoming.data()[i])); i += sizeof(float);
                     auto z =   ntohf(*reinterpret_cast<float*>(&incoming.data()[i])); i += sizeof(float);
                     auto yaw = ntohf(*reinterpret_cast<float*>(&incoming.data()[i])); i += sizeof(float);
-                    std::cout << "Writing Stuff" << x << " " << y << " " << z << " " << yaw << std::endl;
-                    // BUG: NOt adding yaw yet
-                    /*
-                    auto pos = Vector3(x, y, z);
-                    Gizmo g(gposition, gtexture, 4, pos);
-                    std::lock_guard<std::mutex> lock(world->entity_guard);
-                    world->entities.emplace_back(std::move(g));
-                    lock.~lock_guard();
-                    */
+
+                    std::lock_guard<std::mutex> ent_guard(world->entity_guard);
+                    world->tocreate_entities.emplace_back(EntityTransform(Vector3(x, y, z), yaw));
+                    ent_guard.~lock_guard();
                 }
                 if (section_id == 0) { // Full chunk
                     auto cidx = ntohl(*reinterpret_cast<int32_t*>(&incoming.data()[i])); i += sizeof(int32_t);

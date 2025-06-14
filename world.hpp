@@ -24,6 +24,7 @@ struct World {
 
     // Entities
     std::mutex entity_guard;
+    std::vector<EntityTransform> tocreate_entities;
     std::vector<Gizmo> entities;
 
     void reload_check(IndexId pos);
