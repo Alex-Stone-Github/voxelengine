@@ -71,10 +71,10 @@ void draw_chunk(
     glBindVertexArray(chunk.vao);
     glDrawArrays(GL_QUADS, 0, chunk.vertex_count);
 }
-std::optional<Block> ChunkData::get_block(size_t ix, size_t iy, size_t iz) const {
-    if (!(ix < sizex && ix >= 0)) return std::nullopt;
-    if (!(iy < sizey && iy >= 0)) return std::nullopt;
-    if (!(iz < sizez && iz >= 0)) return std::nullopt;
+std::optional<Block> ChunkData::get_block(ssize_t ix, ssize_t iy, ssize_t iz) const {
+    if (!(ix < static_cast<ssize_t>(sizex) && ix >= 0)) return std::nullopt;
+    if (!(iy < static_cast<ssize_t>(sizey) && iy >= 0)) return std::nullopt;
+    if (!(iz < static_cast<ssize_t>(sizez) && iz >= 0)) return std::nullopt;
     return blocks[ix][iy][iz];
 }
 void recompute_mesh(

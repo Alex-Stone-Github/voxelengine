@@ -8,4 +8,4 @@ echo "Starting Server!"
 sleep 1
 
 echo "Starting Client!"
-./main "127.0.0.1" 8001
+./voxelclient 127.0.0.1 8001
