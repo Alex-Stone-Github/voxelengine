@@ -18,7 +18,7 @@ all: $(BUILDDIRNAME)/$(OUT) $(BUILDDIRNAME)/$(OUT).exe $(BUILDDIRNAME)/voxelserv
 	cp /usr/x86_64-w64-mingw32/sys-root/mingw/bin/* $(BUILDDIRNAME)
 	cp shader $(BUILDDIRNAME) -r
 	cp picture $(BUILDDIRNAME) -r
-	cp bootstrap-linux.sh $(BUILDDIRNAME)
+	cp bootstrap* $(BUILDDIRNAME)
 
 	cp doc $(BUILDDIRNAME) -r
 	cp README.md $(BUILDDIRNAME)

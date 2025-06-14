@@ -22,8 +22,7 @@ Checkout [LICENSE](./LICENSE).
 4. Run the executable file depending on your operating system:
 
 ## Windows
-1. Double Click the `voxelserver.exe` file in file explorer(you may have to press *More Info > run anyway*)
-2. Double Click the `voxelclient.exe` file in file explorer(you may have to press *More Info > run anyway*)
+Double click the file `bootstrap-windows.bat` inside of the unzipped release folder in order to run it. This will open multiple log windows for debugging as well.
 
 ## Linux
 ```bash

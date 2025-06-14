@@ -1,6 +1,6 @@
 #!/bin/sh
 
-echo "Running Voxel Game(Make sure valid binaries are built)!"
+echo "Running Voxel Game!"
 
 echo "Starting Server!"
 ./voxelserver 8001&
