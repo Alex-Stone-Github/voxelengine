@@ -95,6 +95,7 @@ void net::spinup(World* world) {
 }
 
 
+/*
 void net::ClientGetChunkUpdate(IndexId chid) { // id 0
     std::vector<uint8_t> sendbuffer;
 
@@ -146,6 +147,94 @@ void net::ClientGetChunkFull(IndexId chid) { // id 1
     net::pl_write(reinterpret_cast<const char*>(sendbuffer.data()), sendbuffer.size());
 
 }
-void net::ClientSendChunkUpdate(IndexId chid, IndexId blkid, uint8_t blk) { // id2
+*/
 
+int net::clientsection_kind_toid(net::ClientSectionKind kind) {
+    if (kind == net::ClientSectionKind::kClientGetChunkUpdate) return 0;
+    if (kind == net::ClientSectionKind::kClientGetChunkFull) return 1;
+    if (kind == net::ClientSectionKind::kClientSendChunkUpdate) return 2;
+    if (kind == net::ClientSectionKind::kClientSendPlayerPosUpdate) return 3;
+    std::unreachable();
+}
+size_t net::clientsection_tosize(net::ClientSectionKind kind) {
+    if (kind == net::ClientSectionKind::kClientGetChunkUpdate) return 4*3;
+    if (kind == net::ClientSectionKind::kClientGetChunkFull) return  4*3;
+    if (kind == net::ClientSectionKind::kClientSendChunkUpdate) return 4*3*2+4;
+    if (kind == net::ClientSectionKind::kClientSendPlayerPosUpdate) return 4*4;
+    std::unreachable();
+}
+
+static std::vector<net::ClientSection> outgoing_sections;
+static std::mutex outgoing_section_lck;
+
+void net::enqueue_section(net::ClientSection section) {
+    std::lock_guard<std::mutex> _grd(outgoing_section_lck);
+    outgoing_sections.push_back(section);
+}
+void net::sendall() {
+    std::lock_guard<std::mutex> _grd(outgoing_section_lck);
+    std::vector<uint8_t> sendbuffer;
+
+    // Calculate size
+    size_t sendsize = 4; // Packet Header
+    for (auto const& section : outgoing_sections) {
+        sendsize += 4; // Section Id
+        sendsize += clientsection_tosize(section.kind);
+    }
+    std::ranges::copy(reverse_endian(static_cast<unsigned int>(sendsize)), std::back_inserter(sendbuffer));
+
+    // Iterate through the sections and add them
+    for (auto const& section : outgoing_sections) {
+        // Encode SectionId
+        unsigned int sectionid = net::clientsection_kind_toid(section.kind);
+        std::ranges::copy(reverse_endian(sectionid), std::back_inserter(sendbuffer));
+        // Encode specifics
+        if (section.kind == net::ClientSectionKind::kClientGetChunkUpdate) {
+            std::ranges::copy(reverse_endian(section.d.c_g_update.chunkid.x),
+                std::back_inserter(sendbuffer));
+            std::ranges::copy(reverse_endian(section.d.c_g_update.chunkid.y),
+                std::back_inserter(sendbuffer));
+            std::ranges::copy(reverse_endian(section.d.c_g_update.chunkid.z),
+                std::back_inserter(sendbuffer));
+        }
+        if (section.kind == net::ClientSectionKind::kClientGetChunkFull) {
+            std::ranges::copy(reverse_endian(section.d.c_g_full.chunkid.x),
+                std::back_inserter(sendbuffer));
+            std::ranges::copy(reverse_endian(section.d.c_g_full.chunkid.y),
+                std::back_inserter(sendbuffer));
+            std::ranges::copy(reverse_endian(section.d.c_g_full.chunkid.z),
+                std::back_inserter(sendbuffer));
+        }
+        if (section.kind == net::ClientSectionKind::kClientSendChunkUpdate) {
+            std::ranges::copy(reverse_endian(section.d.c_s_update.chunkid.x),
+                std::back_inserter(sendbuffer));
+            std::ranges::copy(reverse_endian(section.d.c_s_update.chunkid.y),
+                std::back_inserter(sendbuffer));
+            std::ranges::copy(reverse_endian(section.d.c_s_update.chunkid.z),
+                std::back_inserter(sendbuffer));
+            std::ranges::copy(reverse_endian(section.d.c_s_update.blocklocid.x),
+                std::back_inserter(sendbuffer));
+            std::ranges::copy(reverse_endian(section.d.c_s_update.blocklocid.y),
+                std::back_inserter(sendbuffer));
+            std::ranges::copy(reverse_endian(section.d.c_s_update.blocklocid.z),
+                std::back_inserter(sendbuffer));
+            std::ranges::copy(reverse_endian(section.d.c_s_update.blockid),
+                std::back_inserter(sendbuffer));
+        }
+        if (section.kind == net::ClientSectionKind::kClientSendPlayerPosUpdate) {
+            std::ranges::copy(reverse_endian(section.d.c_sp_update.transform.position.x),
+                std::back_inserter(sendbuffer));
+            std::ranges::copy(reverse_endian(section.d.c_sp_update.transform.position.y),
+                std::back_inserter(sendbuffer));
+            std::ranges::copy(reverse_endian(section.d.c_sp_update.transform.position.z),
+                std::back_inserter(sendbuffer));
+            std::ranges::copy(reverse_endian(section.d.c_sp_update.transform.yaw),
+                std::back_inserter(sendbuffer));
+        }
+    }
+
+    // Cleanup
+    assert(sendsize == sendbuffer.size());
+    net::pl_write(reinterpret_cast<const char*>(sendbuffer.data()), sendbuffer.size());
+    outgoing_sections.clear();
 }

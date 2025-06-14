@@ -35,7 +35,10 @@ void World::reload_check(IndexId pos) {
             auto lc = lcchunk.find(nid);
             if (lc == lcchunk.end()) {
                 // Make Network Request
-                net::ClientGetChunkFull(nid);
+                net::ClientSection section;
+                section.kind = net::ClientSectionKind::kClientGetChunkFull;
+                section.d.c_g_full = net::ClientGetChunkFull(nid);
+                net::enqueue_section(section);
                 continue; // Cannot Load Chunk Yet
             }
             lock.~lock_guard();

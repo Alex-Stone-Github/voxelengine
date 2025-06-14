@@ -79,7 +79,7 @@ impl IncomingPacket {
                             }));
                     } else {return  Err(PacketDecodeError);}
                 },
-                4 => { // Send Position Update
+                3 => { // Send Position Update
                     let x_bytes = byteutil::take_bytes(&mut bytes, 4);
                     let x = byteutil::as_f32(&x_bytes);
                     let y_bytes = byteutil::take_bytes(&mut bytes, 4);

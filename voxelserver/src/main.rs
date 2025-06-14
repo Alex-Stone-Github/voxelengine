@@ -50,7 +50,10 @@ fn main() {
         listener::connection_listener(clients);
     });
 
+    let mut i = 0.0;
+
     loop {
+        i += 0.01;
         game.clients.lock().unwrap().iter().for_each(|client| {
             client.lock().unwrap().step(&mut game.world);
             // Testing Code
@@ -63,7 +66,7 @@ fn main() {
             client.lock().unwrap().outgoing.0.push(ServerSection::ServerSendEntityInfo(
                 EntityInfo {
                     position: Vector3::new(0.0, 32.0, -9.0),
-                    yaw: -std::f32::consts::FRAC_PI_4,
+                    yaw: -std::f32::consts::FRAC_PI_4+i,
                 }
             ));
             client.lock().unwrap().outgoing.0.push(ServerSection::ServerSendEntityInfo(
@@ -72,6 +75,9 @@ fn main() {
                     yaw: 0.0,
                 }
             ));
+            let mut tmp = client.lock().unwrap();
+            let player_entity = tmp.recent_player.clone();
+            tmp.outgoing.0.push(ServerSection::ServerSendEntityInfo(player_entity));
         });
         // Continue?
     }

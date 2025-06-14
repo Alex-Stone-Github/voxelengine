@@ -15,6 +15,7 @@ pub struct GameClient {
     pub connection: std::net::TcpStream,
     pub incoming_bytes: Vec<u8>,
     pub outgoing: OutgoingPacket,
+    pub recent_player: EntityInfo,
 }
 impl GameClient {
     pub fn new(stream: std::net::TcpStream) -> Self {
@@ -22,6 +23,7 @@ impl GameClient {
             connection: stream,
             incoming_bytes: Vec::new(),
             outgoing: OutgoingPacket(Vec::new()),
+            recent_player: EntityInfo { position: Vector3 { x: 0.0, y: 0.0, z: 0.0 }, yaw: std::f32::consts::FRAC_PI_3 }
         }
     }
     pub fn packet_len_hint(&self) -> Option<usize> {
@@ -55,14 +57,20 @@ impl GameClient {
         }
         // Make updates to local information and send relevant
         for section in incoming_packet.0 {
-            if let ClientSection::ClientGetChunkFull(chunkid) = section {
-                // We are requesting the full chunk
-                let exists = world.keys().any(|id| *id == chunkid);
-                if !exists {continue;}
-                let data = &world[&chunkid];
-                let section = ServerSection::ServerSendFullChunk(chunkid, data.clone());
-                self.outgoing.0.push(section);
-            }
+            match section  {
+                ClientSection::ClientGetChunkFull(chunkid) => {
+                    // Return the full chunk data if it exists
+                    let exists = world.keys().any(|id| *id == chunkid);
+                    if !exists {continue;}
+                    let data = &world[&chunkid];
+                    let section = ServerSection::ServerSendFullChunk(chunkid, data.clone());
+                    self.outgoing.0.push(section);
+                }
+                ClientSection::ClientSendPlayerPosUpdate(transform) => {
+                    self.recent_player = transform;
+                }
+                _ => unimplemented!()
+            };
         }
 
         // Send appropriate information out

@@ -145,7 +145,6 @@ int main() {
             world.entities.push_back(Gizmo(gposition, gtexture, 4, entity_info));
         }
 
-
         // Draw the chunks
         std::lock_guard<std::mutex> live_chunk_lock(world.localchunk_guard);
         set_texture(program, atlas);
@@ -156,6 +155,16 @@ int main() {
         std::ranges::for_each(world.entities, [&](Gizmo const& entity) {
             draw_gizmo(entity, camera, program);
         });
+
+        // Send All updates and requests in bulk
+        net::ClientSection section;
+        section.kind = net::ClientSectionKind::kClientSendPlayerPosUpdate;
+        auto loc = Vector3(camera.position.x, camera.position.y, camera.position.z - 2);
+        section.d.c_sp_update = net::ClientSendPlayerPosUpdate(
+            EntityTransform(loc, camera.yaw)
+        );
+        net::enqueue_section(section);
+        net::sendall();
 
         SDL_GL_SwapWindow(window);
     }

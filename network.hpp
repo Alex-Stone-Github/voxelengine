@@ -16,10 +16,41 @@ void pl_close();
 bool init(); 
 void spinup(World*);
 
-// Protocol Names (hence different specific naming case)
-// TODO: New packet for bulk requests
-void ClientGetChunkUpdate(IndexId);
-void ClientGetChunkFull(IndexId);
-void ClientSendChunkUpdate(IndexId, IndexId, uint8_t);
+
+// Sending ---------------------------
+enum ClientSectionKind {
+    kClientGetChunkUpdate,
+    kClientGetChunkFull,
+    kClientSendChunkUpdate,
+    kClientSendPlayerPosUpdate,
+};
+int clientsection_kind_toid(ClientSectionKind kind);
+/// Just the size of the payload - not including section id
+size_t clientsection_tosize(ClientSectionKind kind);
+struct ClientGetChunkUpdate {
+    IndexId chunkid;
+};
+struct ClientGetChunkFull {
+    IndexId chunkid;
+};
+struct ClientSendChunkUpdate {
+    IndexId chunkid, blocklocid;
+    unsigned int blockid;
+};
+struct ClientSendPlayerPosUpdate {
+    EntityTransform transform;
+};
+union ClientSectionData {
+    ClientGetChunkUpdate      c_g_update;
+    ClientGetChunkFull        c_g_full;
+    ClientSendChunkUpdate     c_s_update;
+    ClientSendPlayerPosUpdate c_sp_update;
+};
+struct ClientSection {
+    ClientSectionKind kind;
+    ClientSectionData d;
+};
+void enqueue_section(ClientSection section);
+void sendall();
 
 }
