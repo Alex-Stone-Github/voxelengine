@@ -1,42 +1,36 @@
+# Build Flags and plateform specific flags
 CC = g++
 UNIXLIBS = -lGLEW -lGL
-WINLIBS = -lglew32 -lopengl32 -DGLEW_STATIC
+WINLIBS = -lglew32 -lopengl32 -DGLEW_STATIC -lws2_32 -DWIN -DSDL_MAIN_HANDLED -static-libgcc -static-libstdc++
 CFLAGS = -std=c++23 -Wall -lSDL2 -I./vender -DGLM_ENABLE_EXPERIMENTAL #-Wextra
 DBG = -g
 
-sources = main.cpp shader.cpp camera.cpp chunk.cpp vector3.cpp texture.cpp world.cpp gizmo.cpp network.cpp netplat.cpp
-out = main
+# File Names
+SOURCES = main.cpp shader.cpp camera.cpp chunk.cpp vector3.cpp texture.cpp world.cpp gizmo.cpp network.cpp netplat.cpp
+BUILDDIRNAME = build
+OUT = main
+RELEASENAME = $(BUILDDIRNAME)-$(OUT)-all.zip
 
-.PHONY: linux linux-bin windows-bin clean run
+.PHONY: all clean release
 
-linux: linux-bin
-	-mkdir build
-	-cp $(out) build
-	-cp shader build -r
-	-cp picture build -r
-	-cp doc build -r
-	-cp README.md build
-	-cp bootstrap-linux.sh build
-	-cp voxelserver/target/debug/voxelserver build
-windows: windows-bin
-	-mkdir build
-	-cp $(out).exe build
-	-cp /usr/x86_64-w64-mingw32/sys-root/mingw/bin/* build
-	-cp shader build -r
-	-cp picture build -r
-	-cp doc build -r
-	-cp README.md build
-	-cp voxelserver/target/debug/voxelserver build
-linux-bin:
-	$(CC) $(sources) -o $(out) $(CFLAGS) $(DBG) $(UNIXLIBS)
-windows-bin:
-# Only one supportoed compiler for windows
-	x86_64-w64-mingw32-g++ $(sources) -o $(out) $(CFLAGS) $(DBG) $(WINLIBS) -DWIN -DSDL_MAIN_HANDLED -static-libgcc -static-libstdc++
-
-run: all
-	./$(out)
-
+$(BUILDDIRNAME): $(BUILDDIRNAME)/$(OUT) $(BUILDDIRNAME)/$(OUT).exe
+	-mkdir $(BUILDDIRNAME)
+	-cp /usr/x86_64-w64-mingw32/sys-root/mingw/bin/* $(BUILDDIRNAME)
+	-cp voxelserver/target/debug/voxelserver $(BUILDDIRNAME)
+	-cp bootstrap-linux.sh $(BUILDDIRNAME)
+	-cp $(OUT)* $(BUILDDIRNAME)
+	-cp shader $(BUILDDIRNAME) -r
+	-cp picture $(BUILDDIRNAME) -r
+	-cp doc $(BUILDDIRNAME) -r
+	-cp README.md $(BUILDDIRNAME)
+$(BUILDDIRNAME)/$(OUT): $(SOURCES) $(BUILDDIR)
+	-@mkdir $(BUILDDIRNAME)
+	$(CC) $^ -o $@ $(CFLAGS) $(DBG) $(UNIXLIBS)
+$(BUILDDIRNAME)/$(OUT).exe: $(SOURCES) $(BUILDDIR) # Only one supportoed compiler for windows
+	-@mkdir $(BUILDDIRNAME)
+	x86_64-w64-mingw32-g++ $^ -o $@ $(CFLAGS) $(DBG) $(WINLIBS)
+release: $(BUILDDIRNAME)
+	zip $(RELEASENAME) $(BUILDDIRNAME) -r
 clean:
-	-rm $(out)
-	-rm $(out).exe
-	-rm build -rf
+	-rm $(BUILDDIRNAME) -rf
+	-rm $(RELEASENAME) -rf

@@ -1,13 +1,14 @@
 #pragma once
 
 #include <cstdint>
+#include <array>
 
 #include "chunk.hpp"
 #include "world.hpp"
 
 namespace net {
 // Plateform Overrides
-bool pl_open();
+bool pl_open(char const* address, uint16_t port);
 ssize_t pl_write(char const* buffer, size_t count);
 ssize_t pl_read(char* buffer, size_t count);
 void pl_close();

@@ -34,7 +34,7 @@ static Vector2 const gtexture[] = {
     {1, 0},
 };
 
-int main() {
+int main(int argc, char** argv) {
     std::cout << "Starting Initialization!" << std::endl;
     assert(SDL_Init(SDL_INIT_EVERYTHING) == 0);
     SDL_Window* window = SDL_CreateWindow("Triangle",
@@ -76,9 +76,13 @@ int main() {
     Image etexture("./picture/image.png", 0);
     Image atlas("./picture/atlas.png", 1);
 
-    std::cout << "Connecting to the network!" << std::endl;
     // Network
-    std::cout << "Network Initialization Successful: " << net::pl_open() << std::endl;
+    char const* hostip = "127.0.0.1"; // Deafults
+    uint16_t hostport = 8000;
+    if (argc >= 2) hostip = argv[1]; // Command line overrides
+    if (argc >= 3) hostport = atoi(argv[2]);
+    std::cout << "Connecting to network: Ip: " << hostip << " Port: " << hostport << std::endl;
+    std::cout << "Network Initialization Successful: " << net::pl_open(hostip, hostport) << std::endl;
     net::ClientGetChunkUpdate(IndexId(69, 70, 80));
     // Thread Spinning
     std::thread netthread(net::spinup, &world);
@@ -139,7 +143,6 @@ int main() {
         world.dirty_check();
 
         // Get the current entities
-        std::cout << "To create: " << world.tocreate_entities.size() << std::endl;
         world.entities.clear();
         for (auto const& entity_info : world.tocreate_entities) {
             world.entities.push_back(Gizmo(gposition, gtexture, 4, entity_info));

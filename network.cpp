@@ -6,6 +6,7 @@
 #include <ranges>
 #include <cstring>
 #include <iostream>
+#include <utility>
 
 template<typename Width4Type>
 std::array<uint8_t, 4> reverse_endian(Width4Type mnum) {

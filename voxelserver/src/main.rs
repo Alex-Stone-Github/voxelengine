@@ -5,7 +5,7 @@
 use client::GameClient;
 use serverpacket::{OutgoingPacket, ServerSection};
 use core::{ChunkData, IndexId, CSIZE};
-use std::sync::{Arc, Mutex};
+use std::{env::Args, sync::{Arc, Mutex}};
 use crate::{core::Block, gametypes::{EntityInfo, Vector3}};
 
 mod listener;
@@ -33,6 +33,13 @@ impl Game {
 }
 
 fn main() {
+    // Get port
+    let mut port_no = 8000;
+    let args: Vec<String> = std::env::args().collect();
+    if args.len() == 2 {
+        port_no = args[1].parse().expect("Invalid port argument");
+    }
+
     // Game State
     let mut game = Game::new();
     const DST: i32 = 6;
@@ -47,7 +54,7 @@ fn main() {
     // Spin up the incoming thread
     let clients = Arc::clone(&game.clients);
     std::thread::spawn(move || {
-        listener::connection_listener(clients);
+        listener::connection_listener(clients, port_no);
     });
 
     let mut i = 0.0;

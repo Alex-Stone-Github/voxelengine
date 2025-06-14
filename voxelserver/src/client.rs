@@ -53,6 +53,7 @@ impl GameClient {
                 incoming_packet = clientpacket::IncomingPacket::from_buffer(bytes)
                     .expect("Invalid Packet");
                 self.incoming_bytes.drain(0..packet_len);
+                println!("Received Packet with {} sections", incoming_packet.0.len());
             }
         }
         // Make updates to local information and send relevant
@@ -74,7 +75,7 @@ impl GameClient {
         }
 
         // Send appropriate information out
-        println!("Send Packet with {} sections and {} length", self.outgoing.0.len(), self.outgoing.calulate_net_size());
+        println!("Sent Packet with {} sections and {} length", self.outgoing.0.len(), self.outgoing.calulate_net_size());
         let buffer = self.outgoing.into_buffer();
         self.outgoing.0.clear();
         self.connection.write_all(buffer.iter().as_slice())
