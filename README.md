@@ -35,10 +35,3 @@ sh bootstrap-linux.sh
 
 # Bugs, Features Requests, & Issues
 Open a new issue in the issues tab and write your feedback.
-
-# History
-## Early Build
-![Early](./doc/cover.png)
-
-# Vendor Assets
-Checkout [doc/assets.md](./doc/assets.md).
