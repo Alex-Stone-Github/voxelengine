@@ -9,21 +9,24 @@ use crate::serverpacket::*;
 use crate::core::*;
 use crate::gametypes::Vector3;
 
-
+static mut i: usize = 0;
 
 pub struct GameClient {
     pub connection: std::net::TcpStream,
     pub incoming_bytes: Vec<u8>,
     pub outgoing: OutgoingPacket,
-    pub recent_player: EntityInfo,
+    pub unique: usize,
 }
 impl GameClient {
     pub fn new(stream: std::net::TcpStream) -> Self {
-        return Self {
+        // SAFETY: Safe because we only ever have one thread create clients at a time(listener)
+        unsafe{i += 1;}
+        Self {
             connection: stream,
             incoming_bytes: Vec::new(),
             outgoing: OutgoingPacket(Vec::new()),
-            recent_player: EntityInfo { position: Vector3 { x: 0.0, y: 0.0, z: 0.0 }, yaw: std::f32::consts::FRAC_PI_3 }
+            // Safe because we only ever have one thread create clients at a time(listener)
+            unique: unsafe{i}
         }
     }
     pub fn packet_len_hint(&self) -> Option<usize> {
@@ -34,8 +37,7 @@ impl GameClient {
         ];
         Some(byteutil::as_u32(len_bytes.as_slice()) as usize)
     }
-    pub fn step(&mut self, world: &mut std::collections::HashMap<IndexId,
-        ChunkData>) {
+    pub fn step(&mut self, world: crate::SharedResource<crate::World>) {
         // Read More bytes
         let mut buffer: [u8; 1024*8] = [0; 1024*8];
         // TODO / BUG: This call blocks and will wait until we have more bytes / Crazy
@@ -61,14 +63,15 @@ impl GameClient {
             match section  {
                 ClientSection::ClientGetChunkFull(chunkid) => {
                     // Return the full chunk data if it exists
-                    let exists = world.keys().any(|id| *id == chunkid);
+                    let chunks = &world.lock().unwrap().chunks;
+                    let exists = chunks.keys().any(|id| *id == chunkid);
                     if !exists {continue;}
-                    let data = &world[&chunkid];
+                    let data = &chunks[&chunkid];
                     let section = ServerSection::ServerSendFullChunk(chunkid, data.clone());
                     self.outgoing.0.push(section);
                 }
                 ClientSection::ClientSendPlayerPosUpdate(transform) => {
-                    self.recent_player = transform;
+                    let _ = world.lock().unwrap().entities.insert(self.unique, transform);
                 }
                 _ => unimplemented!()
             };

@@ -5,7 +5,7 @@
 use client::GameClient;
 use serverpacket::{OutgoingPacket, ServerSection};
 use core::{ChunkData, IndexId, CSIZE};
-use std::{env::Args, sync::{Arc, Mutex}};
+use std::{any::Any, env::Args, sync::{Arc, Mutex}};
 use crate::{core::Block, gametypes::{EntityInfo, Vector3}};
 
 mod listener;
@@ -19,15 +19,22 @@ mod gametypes;
 
 pub type SharedResource<T> = Arc<Mutex<T>>;
 
+struct World {
+    chunks: std::collections::HashMap<IndexId, ChunkData>,
+    entities: std::collections::HashMap<usize, EntityInfo>,
+}
 struct Game {
     clients: SharedResource<Vec<SharedResource<GameClient>>>,
-    world: std::collections::HashMap<IndexId, ChunkData>,
+    world: SharedResource<World>,
 }
 impl Game {
     fn new() -> Self {
         Self {
             clients: Arc::new(Mutex::new(vec![])),
-            world: std::collections::HashMap::new(),
+            world: Arc::new(Mutex::new(World{
+                chunks: std::collections::HashMap::new(),
+                entities: std::collections::HashMap::new(),
+            })),
         }
     }
 }
@@ -41,51 +48,30 @@ fn main() {
     }
 
     // Game State
-    let mut game = Game::new();
+    let game = Arc::new(Mutex::new(Game::new()));
     const DST: i32 = 6;
     for x in -DST..DST {
         for z in -DST..DST {
-            game.world.insert(
+            game.lock().unwrap().world.lock().unwrap().chunks.insert(
                 IndexId{x,y:0,z}, generate::generate(IndexId{x,y:0,z})
             );
         }
     }
 
     // Spin up the incoming thread
-    let clients = Arc::clone(&game.clients);
+    let tmp_game = Arc::clone(&game);
     std::thread::spawn(move || {
-        listener::connection_listener(clients, port_no);
+        listener::connection_listener(tmp_game, port_no);
     });
 
+    // Logic Processing Thread
     let mut i = 0.0;
-
     loop {
-        i += 0.01;
-        game.clients.lock().unwrap().iter().for_each(|client| {
-            client.lock().unwrap().step(&mut game.world);
-            // Testing Code
-            client.lock().unwrap().outgoing.0.push(ServerSection::ServerSendEntityInfo(
-                EntityInfo {
-                    position: Vector3::new(9.0, 32.0, -9.0),
-                    yaw: std::f32::consts::FRAC_PI_4,
-                }
-            ));
-            client.lock().unwrap().outgoing.0.push(ServerSection::ServerSendEntityInfo(
-                EntityInfo {
-                    position: Vector3::new(0.0, 32.0, -9.0),
-                    yaw: -std::f32::consts::FRAC_PI_4+i,
-                }
-            ));
-            client.lock().unwrap().outgoing.0.push(ServerSection::ServerSendEntityInfo(
-                EntityInfo {
-                    position: Vector3::new(1.0, 32.0, -3.0),
-                    yaw: 0.0,
-                }
-            ));
-            let mut tmp = client.lock().unwrap();
-            let player_entity = tmp.recent_player.clone();
-            tmp.outgoing.0.push(ServerSection::ServerSendEntityInfo(player_entity));
-        });
-        // Continue?
+        i += 0.001;
+        // Deltatime calculations (TODO)
+        let _ = game.lock().unwrap().world.lock().unwrap().entities
+            .insert(1000, EntityInfo { position: 
+                Vector3 { x: 0.0, y: 33.0, z: 0.0 }, yaw: i });
+        std::thread::sleep(std::time::Duration::from_millis(10));
     }
 }

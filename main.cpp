@@ -64,7 +64,6 @@ int main(int argc, char** argv) {
     world.lcchunk.insert(std::pair(IndexId(2, 0, -2), generate(IndexId(2, 0, -2))));
     //world.entities.emplace_back(Gizmo(gposition, gtexture, 4, Vector3(0, 32, -10)));
 
-
     // Shaders -------------------
     auto vert = create_shader("./shader/vert.glsl", GL_VERTEX_SHADER);
     auto frag = create_shader("./shader/frag.glsl", GL_FRAGMENT_SHADER);
@@ -162,7 +161,7 @@ int main(int argc, char** argv) {
         // Send All updates and requests in bulk
         net::ClientSection section;
         section.kind = net::ClientSectionKind::kClientSendPlayerPosUpdate;
-        auto loc = Vector3(camera.position.x, camera.position.y, camera.position.z - 2);
+        auto loc = Vector3(camera.position.x, camera.position.y, camera.position.z);
         section.d.c_sp_update = net::ClientSendPlayerPosUpdate(
             EntityTransform(loc, camera.yaw)
         );
