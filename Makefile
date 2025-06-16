@@ -6,7 +6,7 @@ CFLAGS = -std=c++23 -Wall -lSDL2 -I./vender -DGLM_ENABLE_EXPERIMENTAL -Wextra
 DBG = -g
 
 # File Names
-SOURCES = main.cpp shader.cpp camera.cpp chunk.cpp vector3.cpp texture.cpp world.cpp gizmo.cpp network.cpp netplat.cpp
+SOURCES = $(wildcard *.cpp)
 BUILDDIRNAME = build
 OUT = voxelclient
 RELEASENAME = $(BUILDDIRNAME)-$(OUT)-all.zip
